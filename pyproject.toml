@@ -1,0 +1,50 @@
+[project]
+name = "crane"
+version = "0.1.0"
+description = "Machine learning components for neural interfaces"
+authors = [
+    { name = "Andrii Zahorodnii" },
+    { name = "Alexander Brady" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "h5py>=3.14.0",
+    "numpy>=2.3.3",
+    "psutil>=7.1.0",
+    "temporaldata>=0.1.3",
+    "torch>=2.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.13.3",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 320
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]  # basics: style, flakes, isort, pyupgrade, bugbear
+ignore = ["E501"]                    # let the formatter handle wrapping
+
+[tool.ruff.lint.isort]
+known-first-party = ["crane"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["crane", "tests"]
+exclude = ["\\.venv", "env", "build", "dist"]
+follow_imports = "skip"  # don't analyze third-party libs
+ignore_missing_imports = true
+
+[tool.coverage.report]
+omit = ["*/__init__.py"]
