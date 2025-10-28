@@ -20,16 +20,15 @@ Crane is a comprehensive library designed to facilitate the development and trai
 
 ```
 neurocrane/
-├── setup.py
 ├── pyproject.toml
 ├── README.md
 │
 ├── crane/
 │   ├── __init__.py
+│   │
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── base.py              # BaseModel interface
-│   │   └── config.py            # Base config classes
+│   │   └── base.py              # BaseModel interface
 │   │
 │   ├── training/
 │   │   ├── __init__.py
@@ -40,30 +39,22 @@ neurocrane/
 │   ├── evaluation/
 │   │   ├── __init__.py
 │   │   ├── benchmark.py         # Benchmark base class
-│   │   ├── metrics.py           # Common metrics
 │   │   └── evaluator.py         # evaluate() function
 │   │
-│   ├── data/
+│   ├── dataset/
 │   │   ├── __init__.py
-│   │   ├── base.py              # Optional base patterns
-│   │   ├── samplers.py          # SessionBatchSampler, SubjectBatchSampler
-│   │   └── preprocessing.py     # BasicPreprocessor (data quality only)
+│   │   ├── single_session.py
+│   │   ├── multi_session.py
+│   │   ├── collator.py
+│   │   └── sampler.py
 │   │
-│   ├── preprocessing/           # Common preprocessing operations
-│   │   ├── __init__.py
-│   │   ├── rereferencing.py     # Laplacian, CAR, bipolar
-│   │   ├── spectral.py          # Spectrogram, wavelet, bandpass
-│   │   ├── normalization.py     # Z-score, min-max, robust scaling
-│   │   └── spatial.py           # Electrode selection, spatial filtering
-│   │
-│   └── utils/
+│   └── preprocess/              # Common preprocessing operations
 │       ├── __init__.py
-│       ├── hub.py               # HuggingFace Hub helpers
-│       ├── checkpointing.py
-│       └── logging.py
+│       ├── electrode_subset.py
+│       ├── rereferencing.py     # Laplacian, CAR, bipolar
+│       └── spectrogram.py
 │
 ├── docs/
-│
 └── tests/
 ```
 
