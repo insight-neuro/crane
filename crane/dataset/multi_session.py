@@ -63,7 +63,7 @@ class MultiSessionDataset(ConcatDataset):
         if not data_root.exists():
             raise ValueError("DATA_ROOT_DIR environment variable must be set")
 
-        expanded = []
+        expanded: list[str] = []
         for session_string in session_strings:
             time_range = ("[" + session_string.split("[")[1]) if "[" in session_string else ""
 
