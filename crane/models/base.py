@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from transformers import PreTrainedModel
 
 
-class BaseModel(PreTrainedModel, ABC):
+class Module(PreTrainedModel, ABC):
     """
     Base interface for all neurocrane models.
 

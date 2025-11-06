@@ -1,4 +1,5 @@
-from .electrode_subset import electrode_subset_batch
-from .spectrogram import SpectrogramPreprocessor
+from .electrode_subset import subset_electrodes
+from .rereferencing import laplacian_rereference
+from .spectrogram import Spectrogram
 
-__all__ = ["electrode_subset_batch", "SpectrogramPreprocessor"]
+__all__ = ["subset_electrodes", "Spectrogram", "laplacian_rereference"]

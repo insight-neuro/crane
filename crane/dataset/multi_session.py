@@ -8,14 +8,16 @@ from .single_session import SingleSessionDataset
 
 
 class MultiSessionDataset(ConcatDataset):
-    def __init__(self, session_strings: list, context_length: float):
-        """
-        Initialize MultiSessionDataset with support for glob pattern expansion.
+    """
+    Dataset that concatenates multiple SingleSessionDatasets, with support for glob pattern expansion.
 
-        Args:
-            session_strings (list): List of session strings, potentially containing glob patterns (*, ?, [seq], [!seq])
-            context_length (float): Context length in seconds
-        """
+
+    Args:
+        session_strings (list): List of session strings, potentially containing glob patterns (*, ?, [seq], [!seq])
+        context_length (float): Context length in seconds
+    """
+
+    def __init__(self, session_strings: list, context_length: float):
         super().__init__([SingleSessionDataset(session_string, context_length) for session_string in self._expand_session_wildcards(session_strings)])
 
     # Code that can be used to discover directories in the dataset

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 
-def get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str], dict]:
+def _get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str], dict]:
     """
     Get all laplacian electrodes for a given subject. This function is originally from
     https://github.com/czlwang/BrainBERT repository (Wang et al., 2023)
@@ -66,7 +66,7 @@ def get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str]
     return laplacian_labels, neighbors
 
 
-def laplacian_rereference_neural_data(
+def _rereference_electrodes(
     electrode_data: torch.Tensor,
     electrode_labels: list[str],
     remove_non_laplacian: bool = True,
@@ -89,7 +89,7 @@ def laplacian_rereference_neural_data(
         batch_unsqueeze = True
         electrode_data = electrode_data.unsqueeze(0)
 
-    laplacian_electrodes, laplacian_neighbors = get_all_laplacian_electrodes(electrode_labels)
+    laplacian_electrodes, laplacian_neighbors = _get_all_laplacian_electrodes(electrode_labels)
     laplacian_neighbor_indices = {laplacian_electrode_label: [electrode_labels.index(neighbor_label) for neighbor_label in neighbors] for laplacian_electrode_label, neighbors in laplacian_neighbors.items()}
 
     batch_size, n_electrodes, n_samples = electrode_data.shape
@@ -125,9 +125,9 @@ def laplacian_rereference_neural_data(
     )
 
 
-def laplacian_rereference_batch(batch: dict, remove_non_laplacian: bool = True, inplace: bool = False):
+def laplacian_rereference(batch: dict, remove_non_laplacian: bool = True, inplace: bool = False):
     """
-    Rereference the neural data using the laplacian method (subtract the mean of the neighbors, as determined by the electrode labels)
+    Apply Laplacian rereferencing to a batch of neural data (subtract the mean of the neighbors, as determined by the electrode labels)
 
     Args:
         batch (dict): dictionary from SingleSessionDataset with keys:
@@ -148,34 +148,11 @@ def laplacian_rereference_batch(batch: dict, remove_non_laplacian: bool = True, 
     electrode_data = batch["ieeg"]["data"]  # shape: (n_electrodes, n_samples)
     electrode_labels = batch["channels"]["id"].tolist()
 
-    # laplacian_rereference_neural_data expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
-    rereferenced_data, rereferenced_labels, original_electrode_indices = laplacian_rereference_neural_data(electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian)
+    # _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
+    rereferenced_data, rereferenced_labels, original_electrode_indices = _rereference_electrodes(electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian)
 
     # Update batch with rereferenced data
     batch["ieeg"]["data"] = rereferenced_data
     batch["channels"]["id"] = np.array(rereferenced_labels)
 
     return batch
-
-
-# if __name__ == "__main__":
-#     # Test with SingleSessionDataset
-#     from dataset import SingleSessionDataset
-
-#     dataset = SingleSessionDataset(
-#         "vanblooijs_hermes_developmental_2023/sub-ccepAgeUMCU01/ses-1_task-SPESclin_run-021448",
-#         context_length=1.0,
-#     )
-#     sample = dataset[0]
-
-#     print(f"Original data shape: {sample['ieeg']['data'].shape}", sample["ieeg"]["data"])
-#     print(f"Original channel labels (length: {len(sample['channels']['id'])}): {sample['channels']['id']}")
-
-#     # Apply laplacian rereferencing
-#     rereferenced_sample = laplacian_rereference_batch(sample, inplace=True)
-
-#     print(
-#         f"\nRereferenced data shape: {rereferenced_sample['ieeg']['data'].shape}",
-#         rereferenced_sample["ieeg"]["data"],
-#     )
-#     print(f"Rereferenced channel labels (length: {len(rereferenced_sample['channels']['id'])}): {rereferenced_sample['channels']['id']}")
