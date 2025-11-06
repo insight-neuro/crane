@@ -1,0 +1,59 @@
+site_name: Crane Documentation
+site_description: "Documentation for Crane: A library for building foundation models of the brain."
+site_author: Andrii Zahorodnii, Alexander Brady
+repo_url: https://github.com/insight-neuro/crane
+
+nav:
+  - Home: index.md
+  - Reference:
+    - Overview: reference/index.md
+    - Dataset: reference/dataset.md
+    - Preprocess: reference/preprocess.md
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: favicon.ico
+  features:
+    - navigation.tabs
+    - navigation.instant
+    - navigation.tracking
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - styles/extra.css
+
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - admonition
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            filters: ["!^_"]   # hide _private names

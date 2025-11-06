@@ -15,6 +15,7 @@ build/
 dist/
 *.egg-info/
 *.egg
+uv.lock
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -23,8 +24,7 @@ dist/
 .vscode/
 
 # Cache folders
-.pytest_cache/
-.mypy_cache/
+.*_cache/
 
 # Unit test / coverage reports
 htmlcov/
@@ -43,3 +43,6 @@ coverage.xml
 
 # Windows files
 Thumbs.db
+
+# MkDocs
+site/

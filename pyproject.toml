@@ -19,10 +19,18 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    # Documentation
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.23",
+    "mkdocstrings[python]>=0.30.1",
+
+    # Linting / Formatting / Type Checking
     "mypy>=1.18.2",
+    "ruff>=0.13.3",
+
+    # Testing
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
-    "ruff>=0.13.3",
 ]
 
 [build-system]
