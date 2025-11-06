@@ -1,4 +1,4 @@
-from __future__ import annotations  # allow compatibility for Python 3.9
+from __future__ import annotations
 
 from typing import Literal
 
@@ -6,21 +6,22 @@ import torch
 import torch.nn as nn
 
 
-class SpectrogramPreprocessor(nn.Module):
-    def __init__(self, segment_length: float, p_overlap: float, *, min_frequency: float, max_frequency: float, window: Literal["hann", "boxcar"], remove_line_noise: bool, output_dim: int = -1):
-        """
-        Initialize the SpectrogramPreprocessor with configuration details.
+class Spectrogram(nn.Module):
+    """
+    Spectrogram Preprocessor, computes the spectrogram of iEEG data using STFT.
 
-        Args:
-            segment_length (float): The length of each segment (in seconds) for the STFT.
-            p_overlap (float): The proportion of overlap between segments (between 0 and 1).
-            *,
-            min_frequency (float): The minimum frequency (in Hz) to include in the spectrogram.
-            max_frequency (float): The maximum frequency (in Hz) to include in the spectrogram.
-            window (Literal["hann", "boxcar"]): The type of window to use for the STFT.
-            remove_line_noise (bool): Whether to remove line noise frequencies (e.g., 50/60 Hz).
-            output_dim (int, default=-1): The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.
-        """
+    Args:
+        segment_length (float): The length of each segment (in seconds) for the STFT.
+        p_overlap (float): The proportion of overlap between segments (between 0 and 1).
+        *,
+        min_frequency (float): The minimum frequency (in Hz) to include in the spectrogram.
+        max_frequency (float): The maximum frequency (in Hz) to include in the spectrogram.
+        window (Literal["hann", "boxcar"]): The type of window to use for the STFT.
+        remove_line_noise (bool): Whether to remove line noise frequencies (e.g., 50/60 Hz).
+        output_dim (int, default=-1): The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.
+    """
+
+    def __init__(self, segment_length: float, p_overlap: float, *, min_frequency: float, max_frequency: float, window: Literal["hann", "boxcar"], remove_line_noise: bool, output_dim: int = -1):
         super().__init__()
         self.segment_length = segment_length
         self.p_overlap = p_overlap
@@ -142,7 +143,8 @@ class SpectrogramPreprocessor(nn.Module):
         line_noise_freqs: list | None = None,
         margin: float = 2.0,
     ) -> torch.Tensor:
-        """Compute a mask for line noise frequencies in the spectrogram.
+        """
+        Compute a mask for line noise frequencies in the spectrogram.
 
         Args:
             freq_bins (torch.Tensor): The frequency bins of the spectrogram.

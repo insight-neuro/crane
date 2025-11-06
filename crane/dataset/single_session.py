@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class SingleSessionDataset(Dataset):
+    """
+    Dataset for a single session of iEEG data.
+
+    Args:
+        session_string (str): A string in the format "brainset/subject/session[from:to]". If [from:to] is not provided, the entire session will be used.
+        context_length (float): The length of the context window in seconds.
+    """
+
     def __init__(self, session_string: str, context_length: float):
-        """
-        Initialize the SingleSessionDataset with session details and context length.
-
-        Args:
-            session_string (str): A string in the format "brainset/subject/session[from:to]". If [from:to] is not provided, the entire session will be used.
-            context_length (float): The length of the context window in seconds.
-
-        """
         self.context_length = context_length
         self.session_string = session_string.split("[")[0]  # "brainset/subject/session"
 

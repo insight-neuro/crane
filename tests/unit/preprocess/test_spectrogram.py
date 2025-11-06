@@ -2,14 +2,14 @@ import pytest
 import torch
 from helpers import make_batch
 
-from crane.preprocess import SpectrogramPreprocessor
+from crane.preprocess import Spectrogram
 
 
 @pytest.mark.parametrize("window", ["hann", "boxcar"])
 def test_shape_dtype_and_windows(window):
     batch = make_batch()
     seg_len = 0.5  # s -> nperseg = 128 @ 256 Hz
-    proc = SpectrogramPreprocessor(
+    proc = Spectrogram(
         segment_length=seg_len,
         p_overlap=0.5,
         min_frequency=0.0,
@@ -33,7 +33,7 @@ def test_shape_dtype_and_windows(window):
 
 def test_output_dim_projection():
     batch = make_batch()
-    proc = SpectrogramPreprocessor(
+    proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
         min_frequency=0.0,
@@ -48,7 +48,7 @@ def test_output_dim_projection():
 
 def test_zscore_normalization_centers_over_batch_and_time():
     batch = make_batch()
-    proc = SpectrogramPreprocessor(
+    proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
         min_frequency=0.0,
@@ -70,7 +70,7 @@ def test_zscore_normalization_centers_over_batch_and_time():
 
 def test_line_noise_mask_zeroes_masked_bins():
     batch = make_batch()
-    proc = SpectrogramPreprocessor(
+    proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
         min_frequency=0.0,
@@ -96,7 +96,7 @@ def test_compute_line_noise_mask():
     freq_bins = torch.linspace(0, 100, steps=201)  # 0 to 100 Hz with 0.5 Hz steps
 
     # Instantiate the preprocessor
-    proc = SpectrogramPreprocessor(
+    proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
         min_frequency=0.0,

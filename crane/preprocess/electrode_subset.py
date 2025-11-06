@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 
 
-def electrode_subset_batch(batch: dict, max_n_electrodes: int, inplace: bool = False) -> dict:
+def subset_electrodes(batch: dict, max_n_electrodes: int, inplace: bool = False) -> dict:
     """
     Subset the electrodes to a maximum number of electrodes.
 
