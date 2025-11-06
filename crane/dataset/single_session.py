@@ -31,17 +31,14 @@ class SingleSessionDataset(Dataset):
             self.session,
             "data.h5",
         )
-        self.start_times = []  # list of start times of the context windows
+        self.start_times = np.array([])  # list of start times of the context windows
 
         with h5py.File(self.data_file, "r") as f:
             data = Data.from_hdf5(f)
 
             if "[" in session_string:
-                self.time_from, self.time_to = session_string.split("[")[1][:-1].split(":")
-                self.time_from, self.time_to = (
-                    float(self.time_from),
-                    float(self.time_to),
-                )
+                time_from, time_to = session_string.split("[")[1][:-1].split(":")
+                self.time_from, self.time_to = float(time_from), float(time_to)
             else:
                 self.time_from, self.time_to = data.domain.start[0], data.domain.end[0]
 
