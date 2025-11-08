@@ -43,7 +43,7 @@ jobs:
       - name: Run tests
         run: |
           uv run pytest -q --maxfail=1 --disable-warnings \
-            --cov=vl_saliency --cov-report=term-missing --color=yes
+            --cov=crane --cov-report=term-missing --color=yes
 
   lint:
     name: lint (advisory)
