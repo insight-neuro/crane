@@ -98,5 +98,5 @@ jobs:
         env:
           MYPY_CACHE_DIR: .mypy_cache
         run: |
-          mypy src tests --install-types --non-interactive \
+          mypy . --install-types --non-interactive \
             --show-error-codes --pretty
