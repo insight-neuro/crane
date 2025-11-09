@@ -43,7 +43,7 @@ jobs:
       - name: Run tests
         run: |
           uv run pytest -q --maxfail=1 --disable-warnings \
-            --cov=vl_saliency --cov-report=term-missing --color=yes
+            --cov=crane --cov-report=term-missing --color=yes
 
   lint:
     name: lint (advisory)
@@ -98,5 +98,5 @@ jobs:
         env:
           MYPY_CACHE_DIR: .mypy_cache
         run: |
-          mypy src tests --install-types --non-interactive \
+          mypy . --install-types --non-interactive \
             --show-error-codes --pretty
