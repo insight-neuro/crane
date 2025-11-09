@@ -49,7 +49,7 @@ class BrainBench(ABC):
 
         if self.requires_finetuning and not force_zero_shot:
             model = self.finetune(model, featurizer)
-            
+
             if save_finetuned_directory is not None:
                 model.save_pretrained(save_finetuned_directory)
 
