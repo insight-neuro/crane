@@ -11,10 +11,9 @@ requires-python = ">=3.11"
 dependencies = [
     "h5py>=3.14.0",
     "numpy>=2.3.3",
-    "psutil>=7.1.0",
     "temporaldata>=0.1.3",
     "torch>=2.8.0",
-    "transformers"
+    "transformers",
 ]
 
 [dependency-groups]
