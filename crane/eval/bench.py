@@ -7,6 +7,7 @@ class BrainBench(ABC):
     """Abstract base class for brain benchmarks."""
 
     benchmark_name: str
+    requires_finetuning: bool = False  # Inferred in __init_subclass__
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
