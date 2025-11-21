@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 import h5py
 import numpy as np
@@ -17,20 +17,17 @@ class SingleSessionDataset(Dataset):
     Args:
         session_string (str): A string in the format "brainset/subject/session[from:to]". If [from:to] is not provided, the entire session will be used.
         context_length (float): The length of the context window in seconds.
+        data_root_dir (Path | str): Root directory of the data.
     """
 
-    def __init__(self, session_string: str, context_length: float):
+    def __init__(self, session_string: str, context_length: float, data_root_dir: Path | str):
         self.context_length = context_length
         self.session_string = session_string.split("[")[0]  # "brainset/subject/session"
 
         self.brainset, self.subject, self.session = self.session_string.split("/")
-        self.data_file = os.path.join(
-            os.environ["DATA_ROOT_DIR"],
-            self.brainset,
-            self.subject,
-            self.session,
-            "data.h5",
-        )
+        self.data_root_dir = Path(data_root_dir)
+        self.data_file = self.data_root_dir / self.brainset / self.subject / self.session / "data.h5"
+
         self.start_times = np.array([])  # list of start times of the context windows
 
         with h5py.File(self.data_file, "r") as f:
