@@ -7,7 +7,7 @@ nav:
   - Home: index.md
   - Reference:
     - Overview: reference/index.md
-    - Dataset: reference/dataset.md
+    - Data: reference/data.md
     - Preprocess: reference/preprocess.md
 
 theme:
