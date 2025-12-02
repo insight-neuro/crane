@@ -10,7 +10,8 @@ Crane is a comprehensive library designed to facilitate the development and trai
 - **Lab-to-lab interoperability**: Standard interface enables model sharing
 
 ## Data Format
-The data will be stored in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O:
+The data will be stored in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O.
+Please see the ieeg-data repository for the detailed documentation and implementation.
 ```python
 session = Data(
     # metadata
@@ -40,13 +41,7 @@ session = Data(
 
         type = np.array(["SEEG"]) # options: SEEG, ECOG, EEG, etc
     ),
-    artifacts = Interval(
-        start = np.array([0.0]), # shape: (n_artifacts, )
-        end = np.array([0.0]),
-        affected_channels = np.array([[1]], type=bool), # shape: (n_artifacts, n_electrodes)
-        description = np.array(["UNKNOWN"]),
-        timekeys = ['start', 'end'],  # Only time should be adjusted during operations
-    ),
+    artifacts = Interval() # Specify the affected intervals and channels in a standardized format
 
     # In case the data includes any type of triggers. Note: These could be redundant with the other tags below.
     triggers = IrregularTimeSeries(
@@ -69,13 +64,7 @@ session = Data(
     ),
     
     # In case the data includes images shown
-    images = IrregularTimeSeries(
-        timestamps = stimulus_times,  # When stimuli were shown. (n_stimuli,)
-        duration = np.array([0.100]), # seconds. Shape: (n_stimuli, ). How long the image was presented on the screen.
-        size = np.array([8]), # Shape: (n_stimuli, ). Size of the stimulus in degrees of the visual field.
-        stimulus_ids = np.array([0]),  # Shape: (n_stimuli,). Should point to stimulus_ids in the images.json accompanying the data.h5 file.
-        timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
-    ),
+    images = IrregularTimeSeries()
     
     # In case the data includes sound played
     sounds = None, # same structure as images
@@ -294,5 +283,6 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
 
 
