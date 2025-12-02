@@ -9,6 +9,81 @@ Crane is a comprehensive library designed to facilitate the development and trai
 - **Modular components**: Clear separation of models, training, evaluation, and data handling
 - **Lab-to-lab interoperability**: Standard interface enables model sharing
 
+## Data Format
+The data will be stored in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O:
+```python
+session = Data(
+    # metadata
+    brainset = "STRING",
+    subject = "STRING",
+    session = "STRING",
+    citation = "STRING", # in bib format
+    
+    # In case the data includes iEEG. NTOE: EEG is also included here, as it is a generalization (the same data format).
+    # NOTE: can be extended to fMRI, FUS, or any high-dimensional time series.
+    ieeg = RegularTimeSeries(
+        data = seeg_data,  # Shape: (n_timepoints, n_electrodes). Voltage in uV
+        sampling_rate = 2048,  # Hz
+
+        domain_start = 0.0,  # Start at 0 seconds
+        domain = "auto"  # Let it infer from data length and sampling rate
+    ),
+    channels = ArrayDict(
+        id = np.array(["LAMY1"]), # Shape: (n_electrodes, )
+        
+        # Coordinates of the corresponding electrodes. Usually, these will be the MNI coordinates. 
+        # Note: in some datasets, there will be an exception (if MNI are unavailable or type of probe is different)
+        x = np.array([0.0]), # Shape: (n_electrodes, ). if unknown, can be np.nan
+        y = np.array([0.0]),
+        z = np.array([0.0]),
+        brain_area = np.array(["UNKNOWN"]),
+
+        type = np.array(["SEEG"]) # options: SEEG, ECOG, EEG, etc
+    ),
+    artifacts = Interval(
+        start = np.array([0.0]), # shape: (n_artifacts, )
+        end = np.array([0.0]),
+        affected_channels = np.array([[1]], type=bool), # shape: (n_artifacts, n_electrodes)
+        description = np.array(["UNKNOWN"]),
+        timekeys = ['start', 'end'],  # Only time should be adjusted during operations
+    ),
+
+    # In case the data includes any type of triggers. Note: These could be redundant with the other tags below.
+    triggers = IrregularTimeSeries(
+        timestamps = trigger_times,
+        type = np.array(["MOUSE_CLICK"]),
+        note = np.array([""]), # Optional note together with the trigger. Can be empty.
+        
+        timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
+    ),
+    
+    # In case the data includes stimulation. Note: frequency is not a parameter here! Use many electrical_stimulation events (as separate pulses) to denote the stimulation at a particular frequency.
+    electrical_stimulation = IrregularTimeSeries(
+        timestamps = stimulus_times,  # Shape (n_stim,). If multiple electrodes/electrode pairs at the same time, there will be multiple entries in the timestamp
+        waveform_type = np.array(["BIPHASIC"]),  # (n_stim,).
+        stimulation_site = np.array(["ELEC1-ELEC2"]),  # (n_stim,). Can be two electrode labels separated by a dash
+        amplitude = np.array([1.0]), # mA
+        pulsewidth = np.array([0.001]), # seconds
+        duration = np.array([0.014]), # seconds
+        timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
+    ),
+    
+    # In case the data includes images shown
+    images = IrregularTimeSeries(
+        timestamps = stimulus_times,  # When stimuli were shown. (n_stimuli,)
+        duration = np.array([0.100]), # seconds. Shape: (n_stimuli, ). How long the image was presented on the screen.
+        size = np.array([8]), # Shape: (n_stimuli, ). Size of the stimulus in degrees of the visual field.
+        stimulus_ids = np.array([0]),  # Shape: (n_stimuli,). Should point to stimulus_ids in the images.json accompanying the data.h5 file.
+        timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
+    ),
+    
+    # In case the data includes sound played
+    sounds = None, # same structure as images
+    continuous_sound = None, # unused for now, but may be RegularTimeSeries - the actual raw waveform of the sound
+    
+    domain=ieeg.domain
+)
+
 ## Building your Model
 
 To build a model in Crane, you typically need to implement two main components:
@@ -218,3 +293,4 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
