@@ -1,68 +1,26 @@
 # Crane: Machine Learning for Neural Interfaces
 
-**Package Name:** `neurocrane`  
-**Import Convention:** `import neurocrane as crane`  
-**Purpose:** Standardized framework for iEEG/SEEG foundation model training, evaluation, and sharing
+Crane is a comprehensive library designed to facilitate the development and training of machine learning models for neural data. It provides tools for data handling and common neural model components, making it easier to build and experiment with models in this domain. Crane emphasizes interoperability, reproducibility, and ease of use, allowing researchers to share models and preprocessing pipelines seamlessly.
 
-Crane is a comprehensive library designed to facilitate the development and training of machine learning models for neural data. It provides tools for data handling and common neural model components, making it easier to build and experiment with models in this domain.
-
-## 1. Core Architecture
-
-### 1.1 Design Philosophy
+## Features
 
 - **Framework, not implementation**: Provides interfaces and infrastructure, not models
-- **HuggingFace compatible**: Inherits from `PreTrainedModel` for Hub integration
-- **PyTorch Lightning based**: Training infrastructure built on Lightning
-- **Hydra configured**: All settings managed via composable configs
+- **HuggingFace compatible**: Inherits from HuggingFace Transformers for familiarity, ease of use, and Hub integration
+- **Modular components**: Clear separation of models, training, evaluation, and data handling
 - **Lab-to-lab interoperability**: Standard interface enables model sharing
 
-### 1.2 Package Structure
+## Building your Model
 
-```
-neurocrane/
-├── pyproject.toml
-├── README.md
-│
-├── crane/
-│   ├── __init__.py
-│   │
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── base.py              # BaseModel interface
-│   │
-│   ├── training/
-│   │   ├── __init__.py
-│   │   ├── lightning_module.py  # LightningModule
-│   │
-│   ├── evaluation/
-│   │   ├── __init__.py
-│   │   ├── benchmark.py         # Benchmark base class
-│   │   └── evaluator.py         # evaluate() function
-│   │
-│   ├── dataset/
-│   │   ├── __init__.py
-│   │   ├── single_session.py
-│   │   ├── multi_session.py
-│   │   ├── collator.py
-│   │   └── sampler.py
-│   │
-│   └── preprocess/              # Common preprocessing operations
-│       ├── __init__.py
-│       ├── electrode_subset.py
-│       ├── rereferencing.py     # Laplacian, CAR, bipolar
-│       └── spectrogram.py
-│
-├── docs/
-└── tests/
-```
+To build a model in Crane, you typically need to implement two main components:
+- A `BrainModel` subclass that defines your model architecture and forward pass
+- A `BrainFeatureExtractor` subclass that handles data preprocessing and feature extraction
 
----
+Once these components are defined, you can easily train, evaluate, and share your model using Crane's built-in tools.
 
-
-**Usage in User Models:**
+Example:
 
 ```python
-import neurocrane as crane
+import crane
 from crane.preprocessing import (
     laplacian_rereference,
     zscore_normalize,
@@ -70,8 +28,8 @@ from crane.preprocessing import (
     select_electrodes,
 )
 
-class SEEGTransformer(crane.BaseModel):
-    
+class SEEGFeaturizer(crane.BrainFeatureExtractor):
+
     def preprocess(self, neural_data, **kwargs):
         # Use crane's preprocessing utilities
         
@@ -92,273 +50,171 @@ class SEEGTransformer(crane.BaseModel):
         neural_data = zscore_normalize(neural_data, dim=(1, 2))
         
         return neural_data
+
+
+class SEEGTransformer(crane.BrainModel):
+    
+    def __init__(self, config):
+        super().__init__(config)
+        # Define model layers here
+        self.transformer = torch.nn.Transformer(
+            d_model=config.hidden_size,
+            nhead=config.num_heads,
+            num_encoder_layers=config.num_layers,
+            num_decoder_layers=config.num_layers,
+        )
+
+    def forward(self, features, **kwargs):
+        # Forward pass through transformer
+        transformer_output = self.transformer(features)
+        return transformer_output
+
 ```
 
-```python
-class SpectralModel(crane.BaseModel):
-    """Model that works in frequency domain."""
-    
-    def preprocess(self, neural_data, **kwargs):
-        # Convert to spectrogram
-        spectrogram = compute_spectrogram(
-            neural_data,
-            sampling_rate=self.config.sampling_rate,
-            window_size=256,
-            hop_length=128,
-            freq_range=(1, 100),  # 1-100 Hz
-        )
-        
-        # Log-transform and normalize
-        spectrogram = torch.log(spectrogram + 1e-8)
-        spectrogram = zscore_normalize(spectrogram)
-        
-        return spectrogram
-```
 
 **Key Design Decisions:**
 - All functions are pure, stateless transformations
 - Work with batched data (batch, channels, time)
 - Consistent API across all preprocessing functions
 - Type hints and comprehensive docstrings
-- Examples for each function
 - Users can import and compose as needed
 
----
 
-### 3.6 LightningModule
 
-**File:** `crane/training/lightning_module.py`
+## Design Reusable Benchmarks
+
+Crane is designed to make it simple to share benchmarks across labs. A benchmark typically inherits from `crane.eval.BrainBenchmark` and implements the `evaluate` method. Optionqlly, it can also implement `fine_tune` if the benchmark requires task-specific fine-tuning.
 
 ```python
-import pytorch_lightning as pl
-from crane.models.base import BaseModel
-from typing import Any, Dict
-import torch
+from crane.eval import BrainBenchmark
+from trl import SFTTrainer
 
+class SeizureDetectionBenchmark(BrainBenchmark):
 
-class LightningModule(pl.LightningModule):
-    """
-    PyTorch Lightning wrapper for crane.BaseModel.
-    
-    Handles:
-    - Training loop
-    - Validation loop
-    - Optimizer configuration
-    - Logging
-    
-    Works with ANY model implementing BaseModel interface.
-    """
-    
-    def __init__(
-        self,
-        model: BaseModel,
-        optimizer_config: Dict[str, Any],
-        scheduler_config: Dict[str, Any] = None,
-    ):
-        super().__init__()
-        self.model = model
-        self.optimizer_config = optimizer_config
-        self.scheduler_config = scheduler_config
-        self.save_hyperparameters(ignore=['model'])
-    
-    def forward(self, **batch):
-        return self.model(**batch)
-    
-    def training_step(self, batch: Dict, batch_idx: int) -> torch.Tensor:
-        outputs = self.model(**batch)
-        loss = outputs['loss']
+    def __init__(self, data_path):
+        self.data_path = data_path
+
+    def fine_tune(self, model, featurizer, train_data): # Optional
+        # Fine-tune model on seizure detection task 
+        trainer = SFTTrainer(
+            model=model,
+            processing_class=featurizer,
+            train_dataset=train_data,
+            args=fine_tuning_args,
+        )
+        trainer.train()
+        return model
+
+    def evaluate(self, model, featurizer):
+        # Load benchmark dataset
+        test_data = load_seizure_detection_data(self.data_path)
         
-        # Log metrics
-        self.log('train_loss', loss, prog_bar=True)
+        all_predictions = []
+        all_labels = []
         
-        return loss
-    
-    def validation_step(self, batch: Dict, batch_idx: int):
-        outputs = self.model(**batch)
-        loss = outputs['loss']
+        for raw_data, labels in test_data:
+            # Preprocess data
+            features = featurizer(raw_data)
+            
+            with torch.inference_mode():
+                outputs = model(features)
+            
+            predictions = postprocess_outputs(outputs)
+            all_predictions.extend(predictions)
+            all_labels.extend(labels)
         
-        self.log('val_loss', loss, prog_bar=True)
+        # Compute metrics
+        accuracy = compute_accuracy(all_predictions, all_labels)
+        f1 = compute_f1_score(all_predictions, all_labels)
+        auc = compute_auc(all_predictions, all_labels)
         
-        return loss
-    
-    def configure_optimizers(self):
-        # Create optimizer from config
-        optimizer_cls = self.optimizer_config.pop('_target_')
-        optimizer = optimizer_cls(self.parameters(), **self.optimizer_config)
-        
-        if self.scheduler_config:
-            scheduler_cls = self.scheduler_config.pop('_target_')
-            scheduler = scheduler_cls(optimizer, **self.scheduler_config)
-            return [optimizer], [scheduler]
-        
-        return optimizer
+        return {'accuracy': accuracy, 'f1': f1, 'auc': auc}
 ```
 
-**Key Design Decisions:**
-- Model-agnostic: works with any `BaseModel`
-- Standard Lightning patterns
-- Config-driven optimizer/scheduler setup
-- Minimal boilerplate for users
-
----
-
-## 3. Cross-Lab Workflow
+## Cross-Lab Workflow
 
 ### Lab A: Pretrain and Share
 
 ```python
-# Train model with specific preprocessing
-python train.py
+from transformers import Trainer
 
-# Model automatically pushed to HuggingFace Hub
-# → "lab-a/seeg-foundation-v1"
+# Initialize model and featurizer
+model = SEEGTransformer(config)
+featurizer = SEEGFeaturizer()
+
+# Train the model
+trainer = Trainer(
+    model=model,
+    processing_class=featurizer,
+    train_dataset=pretraining_data,
+    eval_dataset=validation_data,
+    args=training_args,
+)
+
+# Push to Hub
+trainer.push_to_hub("lab-a/seeg-foundation-v1")
 # Preprocessing config saved automatically in model config
 ```
 
 ### Lab B: Load and Analyze
 
 ```python
-import neurocrane as crane
+from crane import BrainModel, BrainFeatureExtractor
+import torch
 
-# Load pretrained model (preprocessing config included!)
-model = crane.BaseModel.from_pretrained("lab-a/seeg-foundation-v1")
+# Load pretrained model and featurizer
+featurizer = BrainFeatureExtractor.from_pretrained("lab-a/seeg-foundation-v1")
+model = BrainModel.from_pretrained("lab-a/seeg-foundation-v1")
 
-# Extract features from their own raw data
-# Preprocessing is applied automatically via __call__
-features = model.extract_features(raw_patient_data)
+# Extract learned representation from own raw data
+features = featurizer(raw_patient_data)
+
+with torch.inference_mode():
+    representations = model(features)
 
 # Do novel analysis
-analyze_neural_representations(features)
+analyze_neural_representations(representations)
 ```
 
 ### Lab C: Fine-tune
 
 ```python
-import neurocrane as crane
+from crane import BrainModel, BrainFeatureExtractor
+from trl import SFTTrainer
 
 # Load and fine-tune
-model = crane.BaseModel.from_pretrained("lab-a/seeg-foundation-v1")
-# Model's preprocessing is preserved
+featurizer = BrainFeatureExtractor.from_pretrained("lab-a/seeg-foundation-v1")
+model = BrainModel.from_pretrained("lab-a/seeg-foundation-v1")
 
 # Fine-tune on new task
-lightning_module = crane.LightningModule(model, optimizer_config)
-trainer.fit(lightning_module, seizure_datamodule)
+trainer = SFTTrainer(
+    model=model,
+    processing_class=featurizer,
+    train_dataset=seizure_train_data,
+    eval_dataset=seizure_val_data,
+    args=fine_tuning_args,
+)
+trainer.train()
 
 # Share fine-tuned model (with same preprocessing)
-model.push_to_hub("lab-c/seeg-seizure-detector")
+trainer.push_to_hub("lab-c/seeg-seizure-detector")
 ```
 
 ### Lab D: Benchmark
 
 ```python
-import neurocrane as crane
+from crane import BrainModel, BrainFeatureExtractor
 
 # Load model
-model = crane.BaseModel.from_pretrained("lab-a/seeg-foundation-v1")
+featurizer = BrainFeatureExtractor.from_pretrained("lab-a/seeg-foundation-v1")
+model = BrainModel.from_pretrained("lab-a/seeg-foundation-v1")
 
 # Evaluate on benchmark (auto fine-tunes if needed)
-benchmark = SeizureDetectionBenchmark(data_path="...")
-results = benchmark.evaluate(model)
-# Preprocessing is applied correctly throughout
+benchmark = SeizureDetectionBenchmark(data_path="...") 
+results = benchmark.run(model, featurizer) # Preprocessing is applied correctly throughout
 
 print(results)
 # {'accuracy': 0.89, 'f1': 0.87, 'auc': 0.92}
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
-
----
-
-### 3.7 Benchmark (NOT SURE HOW TO DO THIS YET)
-
-**File:** `crane/evaluation/benchmark.py`
-
-```python
-from abc import ABC, abstractmethod
-from crane.models.base import BaseModel
-from crane.training.lightning_module import LightningModule
-import pytorch_lightning as pl
-from typing import Dict, Any, Optional
-
-
-class Benchmark(ABC):
-    """
-    Base class for neurocrane benchmarks.
-    
-    Benchmarks can:
-    - Require fine-tuning on train set before evaluation
-    - Support zero-shot evaluation
-    - Provide train/val/test splits
-    - Compute standardized metrics
-    """
-    
-    def __init__(
-        self,
-        name: str,
-        dataset: Any,  # Should provide train/val/test splits
-        requires_finetuning: bool = True,
-        finetune_config: Optional[Dict] = None,
-    ):
-        self.name = name
-        self.dataset = dataset
-        self.requires_finetuning = requires_finetuning
-        self.finetune_config = finetune_config or self._default_finetune_config()
-    
-    @abstractmethod
-    def _default_finetune_config(self) -> Dict:
-        """Return default fine-tuning configuration."""
-        pass
-    
-    def evaluate(
-        self,
-        model: BaseModel,
-        force_zero_shot: bool = False,
-    ) -> Dict[str, float]:
-        """
-        Evaluate model on benchmark.
-        
-        Args:
-            model: Any model implementing BaseModel
-            force_zero_shot: Skip fine-tuning even if benchmark requires it
-            
-        Returns:
-            Dictionary of metric_name -> value
-        """
-        if self.requires_finetuning and not force_zero_shot:
-            model = self._finetune(model)
-        
-        # Evaluate on test set
-        metrics = self._evaluate_split(model, self.dataset.test)
-        
-        return metrics
-    
-    def _finetune(self, model: BaseModel) -> BaseModel:
-        """Fine-tune model on benchmark's train/val sets."""
-        # Wrap in Lightning
-        lightning_module = LightningModule(
-            model=model,
-            optimizer_config=self.finetune_config['optimizer'],
-        )
-        
-        # Create trainer
-        trainer = pl.Trainer(**self.finetune_config['trainer'])
-        
-        # Fine-tune
-        datamodule = self.dataset.get_datamodule()
-        trainer.fit(lightning_module, datamodule)
-        
-        return lightning_module.model
-    
-    @abstractmethod
-    def _evaluate_split(
-        self,
-        model: BaseModel,
-        split_data: Any,
-    ) -> Dict[str, float]:
-        """
-        Compute metrics on a data split.
-        
-        Must be implemented by specific benchmarks.
-        """
-        pass
-```
