@@ -48,15 +48,14 @@ session = Data(
         timestamps = trigger_times,
         type = np.array(["MOUSE_CLICK"]),
         note = np.array([""]), # Optional note together with the trigger. Can be empty.
-        
         timekeys = ['timestamps'],  # Only timestamps should be adjusted during operations
     ),
     
     # In case the data includes stimulation. Note: frequency is not a parameter here! Use many electrical_stimulation events (as separate pulses) to denote the stimulation at a particular frequency.
-    electrical_stimulation = IrregularTimeSeries(
+    stimulation = IrregularTimeSeries(
         timestamps = stimulus_times,  # Shape (n_stim,). If multiple electrodes/electrode pairs at the same time, there will be multiple entries in the timestamp
         waveform_type = np.array(["BIPHASIC"]),  # (n_stim,).
-        stimulation_site = np.array(["ELEC1-ELEC2"]),  # (n_stim,). Can be two electrode labels separated by a dash
+        stimulation_site = np.array(["CHANNEL1-CHANNEL2"]),  # (n_stim,). Can be two channel labels separated by a dash
         amplitude = np.array([1.0]), # mA
         pulsewidth = np.array([0.001]), # seconds
         duration = np.array([0.014]), # seconds
@@ -283,6 +282,7 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
 
 
 
