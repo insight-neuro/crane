@@ -83,6 +83,7 @@ session = Data(
     
     domain=ieeg.domain
 )
+```
 
 ## Building your Model
 
@@ -293,4 +294,5 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
 
