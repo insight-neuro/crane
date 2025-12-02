@@ -10,7 +10,7 @@ Crane is a comprehensive library designed to facilitate the development and trai
 - **Lab-to-lab interoperability**: Standard interface enables model sharing
 
 ## Data Format
-The data will be stored in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O.
+While not required for `crane`, we recommend storing the data in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O.
 Please see the ieeg-data repository for the detailed documentation and implementation.
 ```python
 session = Data(
@@ -282,6 +282,7 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
 
 
 
