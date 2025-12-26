@@ -14,12 +14,12 @@ P = ParamSpec("P")
 class TaskSpec:
     """A specific task instance with all sweeps resolved."""
 
-    role: Role
-    """Specifies whether this is an eval or finetune task."""
-    name: str
-    """Unique name of the task instance."""
     base: str
     """Base name of the task before sweep expansion."""
+    sweep_axes: dict[str, Any]
+    """Mapping of sweep parameter names to their selected values."""
+    role: Role
+    """Specifies whether this is an eval or finetune task."""
     uses: str | None
     """The resource this task uses, if any."""
     tags: set[str]
@@ -27,15 +27,22 @@ class TaskSpec:
     fn: Callable
     """The callable that executes the task."""
 
+    @property
+    def name(self) -> str:
+        """Unique name of the task instance."""
+        suffix = ",".join(f"{name}={value}" for name, value in self.sweep_axes.items())
+        name = f"{self.name}[{suffix}]" if suffix else self.name
+        return name
+
 
 @dataclass(frozen=True)
 class TaskDescriptor:
     """A task definition that may include parameter sweeps."""
 
-    role: Role
-    """Specifies whether this is an eval or finetune task."""
     name: str
     """Unique name of the task."""
+    role: Role
+    """Specifies whether this is an eval or finetune task."""
     uses: str | None
     """The resource this task uses, if any."""
     tags: set[str]
@@ -76,13 +83,14 @@ class TaskDescriptor:
             axis_values = dict(zip(sweep_names, combo, strict=True))
 
             kwargs = {**axis_values, **self.static}
-
-            suffix = ",".join(f"{name}={value}" for name, value in axis_values.items())
-            name = f"{self.name}[{suffix}]" if suffix else self.name
-
             specs.append(
                 TaskSpec(
-                    role=self.role, name=name, base=self.name, uses=self.uses, tags=self.tags, fn=make_bound(**kwargs)
+                    base=self.name,
+                    role=self.role,
+                    sweep_axes=axis_values,
+                    uses=self.uses,
+                    tags=self.tags,
+                    fn=make_bound(**kwargs),
                 )
             )
 
@@ -90,13 +98,13 @@ class TaskDescriptor:
 
 
 def _build_descriptor(
-    role: Role, name: str, uses: str | None, tags: list[str] | None, kwargs: dict[str, Any], fn: Callable
+    name: str, role: Role, uses: str | None, tags: list[str] | None, kwargs: dict[str, Any], fn: Callable
 ) -> TaskDescriptor:
     """Build a TaskDescriptor from the given parameters.
 
     Args:
-        role (Role): Role of the task, either "eval" or "finetune".
         name (str): Name of the task.
+        role (Role): Role of the task, either "eval" or "finetune".
         uses (str | None): Resource used by the task.
         tags (list[str] | None): Tags associated with the task.
         kwargs (dict[str, Any]): Keyword arguments, some of which may be Sweeps.
@@ -134,7 +142,7 @@ def eval(name: str, uses: str | None, tags: list[str] | None = None, **kwargs):
     """
 
     def decorator(fn: Callable[Concatenate[object, BrainModel, BrainFeatureExtractor, P], dict[str, Any]]):
-        desc = _build_descriptor(role="eval", name=name, uses=uses, tags=tags, kwargs=kwargs, fn=fn)
+        desc = _build_descriptor(name=name, role="eval", uses=uses, tags=tags, kwargs=kwargs, fn=fn)
         fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
         return fn
 
@@ -151,7 +159,7 @@ def finetune(name: str, **kwargs):
     """
 
     def decorator(fn: Callable[Concatenate[object, BrainModel, BrainFeatureExtractor, P], BrainModel]):
-        desc = _build_descriptor(role="finetune", name=name, uses=None, tags=None, kwargs=kwargs, fn=fn)
+        desc = _build_descriptor(name=name, role="finetune", uses=None, tags=None, kwargs=kwargs, fn=fn)
         fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
         return fn
 

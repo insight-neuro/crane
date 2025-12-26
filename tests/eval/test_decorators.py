@@ -12,6 +12,9 @@ from crane.eval.decorators import (
 )
 from crane.eval.sweep import Sweep
 
+sweep1 = Sweep(name="sweep1", values_or_fn=[1, 2, 3])
+sweep2 = Sweep(name="sweep2", values_or_fn=["a", "b"])
+
 
 class DummyModel(BrainModel):
     def __init__(self, **kwargs):
@@ -21,8 +24,6 @@ class DummyModel(BrainModel):
     def forward(self, batch: dict, *args, **kwargs):
         return BrainOutput(last_hidden_state=torch.tensor([]))
 
-sweep1 = Sweep(name="sweep1", values_or_fn=[1, 2, 3])
-sweep2 = Sweep(name="sweep2", values_or_fn=["a", "b"])
 
 @pytest.fixture
 def task_descriptor():
@@ -112,10 +113,10 @@ def test_finetune_decorator():
 
     assert hasattr(finetune_fn, "__bench_tasks__")
     assert len(finetune_fn.__bench_tasks__) == 2  # type: ignore
-    
+
     names = {desc.name for desc in finetune_fn.__bench_tasks__}  # type: ignore
     assert names == {"finetune_task", "finetune_task_2"}
-    
+
     assert finetune_fn.__bench_tasks__[0].fn(None, None, None, 10).param in {10, 20}  # type: ignore
     assert finetune_fn.__bench_tasks__[1].fn(None, None, None, 20).param in {10, 20}  # type: ignore
 
