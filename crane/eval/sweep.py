@@ -8,7 +8,6 @@ class Sweep:
 
     name: str
     """Unique name of the sweep parameter."""
-
     values_or_fn: Iterable | Callable[..., Iterable]
     """An iterable of values or a callable that returns an iterable of values to sweep over."""
 

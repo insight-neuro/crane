@@ -1,14 +1,13 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from itertools import product
-from typing import Any, Literal
+from typing import Any, Concatenate, Literal, ParamSpec
 
 from ..core import BrainFeatureExtractor, BrainModel
 from .sweep import Sweep
 
 type Role = Literal["eval", "finetune"]
-
-# TODO: Add docstrings.
+P = ParamSpec("P")
 
 
 @dataclass(frozen=True)
@@ -112,37 +111,20 @@ def _build_descriptor(
     sweeps = {}
     static = {}
 
-    for k, v in kwargs:
+    for k, v in kwargs.items():
         if isinstance(v, Sweep):
             if v.name != k:
                 raise ValueError(f"Sweep name `{v.name}` must match kwarg `{k}`")
-            sweeps[name] = v
+            sweeps[k] = v
         else:
-            static[name] = v
+            static[k] = v
 
     return TaskDescriptor(role=role, name=name, uses=uses, tags=set(tags or []), sweeps=sweeps, static=static, fn=fn)
 
 
-def finetune(name: str, **kwargs):
-    """
-    Decorator to define a finetuning task.
-
-    Args:
-        name (str): Name of the finetuning task.
-        **kwargs: Keyword arguments for the finetuning task, which may include Sweeps.
-    """
-
-    def decorator(fn: Callable[[BrainModel, BrainFeatureExtractor], BrainModel]):
-        desc = _build_descriptor(role="finetune", name=name, uses=None, tags=None, kwargs=kwargs, fn=fn)
-        fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
-        return fn
-
-    return decorator
-
-
 def eval(name: str, uses: str | None, tags: list[str] | None = None, **kwargs):
     """
-    Decorator to define an evaluation task.
+    Define an evaluation task.
 
     Args:
         name (str): Name of the evaluation task.
@@ -151,8 +133,25 @@ def eval(name: str, uses: str | None, tags: list[str] | None = None, **kwargs):
         **kwargs: Keyword arguments for the evaluation task, which may include Sweeps.
     """
 
-    def decorator(fn: Callable[[BrainModel, BrainFeatureExtractor], dict[str, Any]]):
+    def decorator(fn: Callable[Concatenate[object, BrainModel, BrainFeatureExtractor, P], dict[str, Any]]):
         desc = _build_descriptor(role="eval", name=name, uses=uses, tags=tags, kwargs=kwargs, fn=fn)
+        fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
+        return fn
+
+    return decorator
+
+
+def finetune(name: str, **kwargs):
+    """
+    Define a finetuning task.
+
+    Args:
+        name (str): Name of the finetuning task.
+        **kwargs: Keyword arguments for the finetuning task, which may include Sweeps.
+    """
+
+    def decorator(fn: Callable[Concatenate[object, BrainModel, BrainFeatureExtractor, P], BrainModel]):
+        desc = _build_descriptor(role="finetune", name=name, uses=None, tags=None, kwargs=kwargs, fn=fn)
         fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
         return fn
 
