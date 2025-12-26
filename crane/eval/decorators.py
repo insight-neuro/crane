@@ -8,6 +8,7 @@ from .sweep import Sweep
 
 type Role = Literal["eval", "finetune"]
 
+
 @dataclass(frozen=True)
 class TaskSpec:
     role: Role
@@ -64,7 +65,7 @@ def _build_descriptor(role: Role, name: str, uses: str | None, tags: list[str] |
     for k, v in kwargs:
         if isinstance(v, Sweep):
             if v.name != k:
-                raise ValueError(f"Sweep name '{v.name}' must match kwarg '{k}'")
+                raise ValueError(f"Sweep name `{v.name}` must match kwarg `{k}`")
             sweeps[name] = v
         else:
             static[name] = v

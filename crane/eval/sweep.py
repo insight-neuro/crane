@@ -14,10 +14,10 @@ class Sweep:
             values = tuple(self.values_or_fn)
 
         if not values:
-            raise ValueError(f"Sweep '{self.name}' produced no values!")
+            raise ValueError(f"Sweep `{self.name}` produced no values!")
 
         if len(set(values)) != len(values):
-            raise ValueError(f"Sweep '{self.name}' has duplicate values!")
+            raise ValueError(f"Sweep `{self.name}` has duplicate values!")
 
         return values
 

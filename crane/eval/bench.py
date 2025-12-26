@@ -9,7 +9,8 @@ from .decorators import TaskSpec
 class BrainBench(ABC):
     """Abstract base class for brain benchmarks.
 
-    Subclasses only define decorated eval and finetune methods, as well as the `name`, `version`, `reference`.
+    Subclasses only define decorated eval and finetune methods,
+    as well as the `name`, `version`, `reference`.
 
     """
 
@@ -41,7 +42,7 @@ class BrainBench(ABC):
         # Ensure all dependencies are available
         for spec in self._finetunes.values():
             if spec.uses not in self._evals:
-                raise ValueError(f"[{self.name}] Eval `{spec.name} depends on unknown finetune `{spec.name}`")
+                raise ValueError(f"[{self.name}] Eval `{spec.name}` depends on unknown finetune `{spec.name}`")
 
     def _select_tasks(self, evals: list[str] | None, tags: list[str] | None) -> dict[str, TaskSpec]:
         # Base case: return all
