@@ -36,71 +36,6 @@ class BrainBench(ABC):
         self._collect_tasks()
         self._validate_tasks()
 
-    def _collect_tasks(self):
-        """Collect all decorated methods as tasks."""
-        for _, method in inspect.getmembers(self, inspect.ismethod):
-            for desc in getattr(method.__func__, "__bench_tasks__", []):
-                base = desc.name
-                if desc.name == "__base__":
-                    raise ValueError(f"[{self.name}] Task name `__base__` reserved.")
-                if base in self._finetunes or base in self._evals:
-                    raise ValueError(f"[{self.name}] Duplicate task name: `{base}`")
-
-                # Expand sweeps and register tasks
-                for spec in desc.expand(self):
-                    match spec.role:
-                        case "finetune":
-                            self._finetunes[spec.name] = spec
-                            self._finetunes_base[base].append(spec)
-                        case "eval":
-                            self._evals[spec.name] = spec
-                            self._evals_base[base].append(spec)
-                        case _:
-                            raise ValueError(f"[{self.name}] Unknown task role: `{spec.role}`")
-
-    def _validate_tasks(self):
-        """Validate task dependencies."""
-        for spec in self._evals.values():
-            if spec.uses is None:
-                continue
-
-            # Ensure dependencies are available
-            if spec.uses not in self._finetunes:
-                raise ValueError(f"[{self.name}] Eval `{spec.name}` depends on unknown finetune `{spec.uses}`")
-
-    def _select_tasks(self, evals: list[str] | None, tags: list[str] | None) -> dict[str, TaskSpec]:
-        """Select tasks based on eval names and/or tags."""
-        # Base case: return all
-        if not tags and not evals:
-            return self._evals
-
-        # Select all with correct tags
-        tag_set = set(tags or [])
-        tasks = {name: desc for name, desc in self._evals.items() if desc.tags & tag_set} if tags else {}
-
-        # Add all single evals chosen
-        if evals:
-            for eval in evals:
-                tasks[eval] = self._evals[eval]
-
-        return tasks
-
-    def _build_plan(self, tasks: dict[str, TaskSpec]) -> dict[str, list[TaskSpec]]:
-        """Build a DAG to determine which finetunes are needed for which evals."""
-        groups: dict[str, list[TaskSpec]] = {}
-
-        for spec in tasks.values():
-            key = spec.uses or "__base__"
-            groups.setdefault(key, []).append(spec)
-
-        return groups
-
-    def _load_or_finetune(self, spec: TaskSpec, model: BrainModel, featurizer: BrainFeatureExtractor) -> BrainModel:
-        """Load a finetuned model from cache, or finetune it if not available."""
-        # TODO: Load from cache
-        model = spec.fn(model, featurizer)
-        return model
-
     def run(
         self,
         model: BrainModel,
@@ -149,38 +84,6 @@ class BrainBench(ABC):
 
         return results
 
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(name={self.name!r}, finetunes={len(self._finetunes)}, evals={len(self._evals)})"
-        )
-
-    def __str__(self) -> str:
-        d = self.describe()
-        lines = [f"Benchmark: {d['name']}"]
-
-        if d["version"]:
-            lines.append(f"Version: {d['version']}")
-        if d["reference"]:
-            lines.append(f"Reference: {d['reference']}")
-
-        lines.append("Finetune tasks:")
-        for base, info in d["finetunes"].items():
-            axes = ", ".join(info["sweeps"]) or "none"
-            lines.append(f"  - {base}: {info['count']} runs (axes: {axes})")
-        if not d["finetunes"]:
-            lines.append("  (none)")
-
-        lines.append("Eval tasks:")
-        for base, info in d["evals"].items():
-            uses = info["uses"] or "base"
-            axes = ", ".join(info["sweeps"]) or "none"
-            tags = ", ".join(info["tags"]) or "none"
-            lines.append(f"  - {base}: {info['count']} runs (uses: {uses}, axes: {axes}, tags: {tags})")
-        if not d["evals"]:
-            lines.append("  (none)")
-
-        return "\n".join(lines)
-
     def describe(self) -> dict:
         """Structured, machine-readable description of the benchmark."""
         return {
@@ -218,3 +121,106 @@ class BrainBench(ABC):
                 for base, specs in self._evals_base.items()
             },
         }
+
+    def __str__(self) -> str:
+        d = self.describe()
+        lines = [f"Benchmark: {d['name']}"]
+
+        if d["version"]:
+            lines.append(f"Version: {d['version']}")
+        if d["reference"]:
+            lines.append(f"Reference: {d['reference']}")
+
+        lines.append("Finetune tasks:")
+        for base, info in d["finetunes"].items():
+            axes = ", ".join(info["sweeps"]) or "none"
+            lines.append(f"  - {base}: {info['count']} runs (axes: {axes})")
+        if not d["finetunes"]:
+            lines.append("  (none)")
+
+        lines.append("Eval tasks:")
+        for base, info in d["evals"].items():
+            uses = info["uses"] or "base"
+            axes = ", ".join(info["sweeps"]) or "none"
+            tags = ", ".join(info["tags"]) or "none"
+            lines.append(f"  - {base}: {info['count']} runs (uses: {uses}, axes: {axes}, tags: {tags})")
+        if not d["evals"]:
+            lines.append("  (none)")
+
+        return "\n".join(lines)
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}(name={self.name!r}, finetunes={len(self._finetunes)}, evals={len(self._evals)})"
+        )
+
+    # ---- Task collection and validation ----
+
+    def _collect_tasks(self):
+        """Collect all decorated methods as tasks."""
+        for _, method in inspect.getmembers(self, inspect.ismethod):
+            for desc in getattr(method.__func__, "__bench_tasks__", []):
+                base = desc.name
+                if desc.name == "__base__":
+                    raise ValueError(f"[{self.name}] Task name `__base__` reserved.")
+                if base in self._finetunes or base in self._evals:
+                    raise ValueError(f"[{self.name}] Duplicate task name: `{base}`")
+
+                # Expand sweeps and register tasks
+                for spec in desc.expand(self):
+                    match spec.role:
+                        case "finetune":
+                            self._finetunes[spec.name] = spec
+                            self._finetunes_base[base].append(spec)
+                        case "eval":
+                            self._evals[spec.name] = spec
+                            self._evals_base[base].append(spec)
+                        case _:
+                            raise ValueError(f"[{self.name}] Unknown task role: `{spec.role}`")
+
+    def _validate_tasks(self):
+        """Validate task dependencies."""
+        for spec in self._evals.values():
+            if spec.uses is None:
+                continue
+
+            # Ensure dependencies are available
+            if spec.uses not in self._finetunes:
+                raise ValueError(f"[{self.name}] Eval `{spec.name}` depends on unknown finetune `{spec.uses}`")
+
+    # ---- Task selection and execution ----
+
+    def _select_tasks(self, evals: list[str] | None, tags: list[str] | None) -> dict[str, TaskSpec]:
+        """Select tasks based on eval names and/or tags."""
+        # Base case: return all
+        if not tags and not evals:
+            return self._evals
+
+        # Select all with correct tags
+        tag_set = set(tags or [])
+        tasks = {name: desc for name, desc in self._evals.items() if desc.tags & tag_set} if tags else {}
+
+        # Add all single evals chosen
+        if evals:
+            for eval in evals:
+                tasks[eval] = self._evals[eval]
+
+        return tasks
+
+    def _build_plan(self, tasks: dict[str, TaskSpec]) -> dict[str, list[TaskSpec]]:
+        """Build a DAG to determine which finetunes are needed for which evals."""
+        groups: dict[str, list[TaskSpec]] = {}
+
+        for spec in tasks.values():
+            key = spec.uses or "__base__"
+            groups.setdefault(key, []).append(spec)
+
+        return groups
+
+    # ---- Caching and loading ----
+
+    def _load_or_finetune(self, spec: TaskSpec, model: BrainModel, featurizer: BrainFeatureExtractor) -> BrainModel:
+        """Load a finetuned model from cache, or finetune it if not available."""
+        # TODO: Load from cache
+        model = spec.fn(model, featurizer)
+        return model
