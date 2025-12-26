@@ -31,7 +31,7 @@ class TaskSpec:
     def name(self) -> str:
         """Unique name of the task instance."""
         suffix = ",".join(f"{name}={value}" for name, value in self.sweep_axes.items())
-        name = f"{self.name}[{suffix}]" if suffix else self.name
+        name = f"{self.base}[{suffix}]" if suffix else self.base
         return name
 
 

@@ -81,6 +81,12 @@ def test_build_descriptor(task_descriptor):
     assert built_descriptor.fn(None, None, None)["score"] == 0.95
 
 
+def test_task_spec_name(task_descriptor):
+    spec = task_descriptor.expand(object())[0]
+    assert "sweep1=1" in spec.name
+    assert "sweep2=a" in spec.name
+
+
 def test_build_descriptor_tags():
     built_descriptor = _build_descriptor(
         role="eval",
