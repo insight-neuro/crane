@@ -8,34 +8,56 @@ from .sweep import Sweep
 
 type Role = Literal["eval", "finetune"]
 
+# TODO: Add docstrings.
+
 
 @dataclass(frozen=True)
 class TaskSpec:
+    """A specific task instance with all sweeps resolved."""
+
     role: Role
+    """Specifies whether this is an eval or finetune task."""
     name: str
+    """Unique name of the task instance."""
     base: str
+    """Base name of the task before sweep expansion."""
     uses: str | None
+    """The resource this task uses, if any."""
     tags: set[str]
+    """A set of tags associated with this task."""
     fn: Callable
+    """The callable that executes the task."""
 
 
 @dataclass(frozen=True)
 class TaskDescriptor:
+    """A task definition that may include parameter sweeps."""
+
     role: Role
+    """Specifies whether this is an eval or finetune task."""
     name: str
+    """Unique name of the task."""
     uses: str | None
+    """The resource this task uses, if any."""
     tags: set[str]
+    """A set of tags associated with this task."""
     sweeps: dict[str, Sweep]
+    """A mapping of sweep parameter names to Sweep instances."""
     static: dict[str, Any]
+    """A mapping of static parameter names to their fixed values."""
     fn: Callable
+    """The callable that executes the task."""
 
     def expand(self, instance: object) -> list[TaskSpec]:
-        def make_bound(**kwargs):
-            def bound(model: BrainModel, featurizer: BrainFeatureExtractor):
-                return self.fn(instance, model, featurizer, **kwargs)
+        """Expand the task descriptor into a list of task
+        specifications by resolving all parameter sweeps.
 
-            return bound
+        Args:
+            instance (object): The instance to bind to the task function.
 
+        Returns:
+            list[TaskSpec]: A list of expanded task specifications.
+        """
         resolved = {name: sweep.resolve() for name, sweep in self.sweeps.items()}
 
         sweep_names = sorted(resolved.keys())
@@ -43,6 +65,12 @@ class TaskDescriptor:
 
         # Special case: no sweeps -> exactly one task
         combinations = product(*sweep_values if sweep_values else [()])
+
+        def make_bound(**kwargs):
+            def bound(model: BrainModel, featurizer: BrainFeatureExtractor):
+                return self.fn(instance, model, featurizer, **kwargs)
+
+            return bound
 
         specs = []
         for combo in combinations:
@@ -53,12 +81,34 @@ class TaskDescriptor:
             suffix = ",".join(f"{name}={value}" for name, value in axis_values.items())
             name = f"{self.name}[{suffix}]" if suffix else self.name
 
-            specs.append(TaskSpec(role=self.role, name=name, base=self.name, uses=self.uses, tags=self.tags, fn=make_bound(**kwargs)))
+            specs.append(
+                TaskSpec(
+                    role=self.role, name=name, base=self.name, uses=self.uses, tags=self.tags, fn=make_bound(**kwargs)
+                )
+            )
 
         return specs
 
 
-def _build_descriptor(role: Role, name: str, uses: str | None, tags: list[str] | None, kwargs: dict[str, Any], fn: Callable) -> TaskDescriptor:
+def _build_descriptor(
+    role: Role, name: str, uses: str | None, tags: list[str] | None, kwargs: dict[str, Any], fn: Callable
+) -> TaskDescriptor:
+    """Build a TaskDescriptor from the given parameters.
+
+    Args:
+        role (Role): Role of the task, either "eval" or "finetune".
+        name (str): Name of the task.
+        uses (str | None): Resource used by the task.
+        tags (list[str] | None): Tags associated with the task.
+        kwargs (dict[str, Any]): Keyword arguments, some of which may be Sweeps.
+        fn (Callable): The function implementing the task.
+
+    Raises:
+        ValueError: If a sweep name does not match the corresponding kwarg name.
+
+    Returns:
+        TaskDescriptor: The constructed task descriptor.
+    """
     sweeps = {}
     static = {}
 
@@ -74,6 +124,14 @@ def _build_descriptor(role: Role, name: str, uses: str | None, tags: list[str] |
 
 
 def finetune(name: str, **kwargs):
+    """
+    Decorator to define a finetuning task.
+
+    Args:
+        name (str): Name of the finetuning task.
+        **kwargs: Keyword arguments for the finetuning task, which may include Sweeps.
+    """
+
     def decorator(fn: Callable[[BrainModel, BrainFeatureExtractor], BrainModel]):
         desc = _build_descriptor(role="finetune", name=name, uses=None, tags=None, kwargs=kwargs, fn=fn)
         fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
@@ -83,6 +141,16 @@ def finetune(name: str, **kwargs):
 
 
 def eval(name: str, uses: str | None, tags: list[str] | None = None, **kwargs):
+    """
+    Decorator to define an evaluation task.
+
+    Args:
+        name (str): Name of the evaluation task.
+        uses (str | None): Resource used by the evaluation task.
+        tags (list[str] | None): Tags associated with the evaluation task.
+        **kwargs: Keyword arguments for the evaluation task, which may include Sweeps.
+    """
+
     def decorator(fn: Callable[[BrainModel, BrainFeatureExtractor], dict[str, Any]]):
         desc = _build_descriptor(role="eval", name=name, uses=uses, tags=tags, kwargs=kwargs, fn=fn)
         fn.__bench_tasks__ = getattr(fn, "__bench_tasks__", []) + [desc]  # type: ignore
