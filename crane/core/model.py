@@ -10,7 +10,7 @@ from .config import BrainConfig
 
 @dataclass
 class BrainOutput(ModelOutput):
-    last_hidden_state: torch.FloatTensor
+    last_hidden_state: torch.Tensor
 
 
 class BrainModel(PreTrainedModel, ABC):
