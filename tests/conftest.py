@@ -34,7 +34,11 @@ def make_batch():
         # simple reproducible signal (sum of low-freq sines + noise)
         torch.manual_seed(0)
         t = torch.arange(n_samples) / sampling_rate
-        sig = 0.8 * torch.sin(2 * math.pi * 10 * t) + 0.3 * torch.sin(2 * math.pi * 20 * t) + 0.05 * torch.randn(n_samples)
+        sig = (
+            0.8 * torch.sin(2 * math.pi * 10 * t)
+            + 0.3 * torch.sin(2 * math.pi * 20 * t)
+            + 0.05 * torch.randn(n_samples)
+        )
         x = sig.repeat(batch_size, n_elec, 1).clone()
         return {
             "ieeg": {

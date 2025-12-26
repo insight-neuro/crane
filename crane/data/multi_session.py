@@ -18,7 +18,12 @@ class MultiSessionDataset(ConcatDataset):
     """
 
     def __init__(self, session_strings: list, context_length: float, data_root_dir: Path | str):
-        super().__init__([SingleSessionDataset(session_string, context_length, data_root_dir) for session_string in self._expand_session_wildcards(session_strings)])
+        super().__init__(
+            [
+                SingleSessionDataset(session_string, context_length, data_root_dir)
+                for session_string in self._expand_session_wildcards(session_strings)
+            ]
+        )
         self.data_root_dir = Path(data_root_dir)
 
     def _discover_dirs(self, path: Path, require_data_h5: bool = False) -> list[str]:
@@ -26,7 +31,11 @@ class MultiSessionDataset(ConcatDataset):
         if not path.exists():
             return []
 
-        dirs = [d.name for d in path.iterdir() if d.is_dir() and not d.name.startswith(".") and (not require_data_h5 or (d / "data.h5").exists())]
+        dirs = [
+            d.name
+            for d in path.iterdir()
+            if d.is_dir() and not d.name.startswith(".") and (not require_data_h5 or (d / "data.h5").exists())
+        ]
         return sorted(dirs)
 
     def _expand_session_pattern(self, brainset_pattern: str, subject_pattern: str, session_pattern: str) -> list[str]:

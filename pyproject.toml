@@ -38,7 +38,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 320
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]  # basics: style, flakes, isort, pyupgrade, bugbear

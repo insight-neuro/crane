@@ -21,7 +21,17 @@ class Spectrogram(nn.Module):
         output_dim (int, default=-1): The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.
     """
 
-    def __init__(self, segment_length: float, p_overlap: float, *, min_frequency: float, max_frequency: float, window: Literal["hann", "boxcar"], remove_line_noise: bool, output_dim: int = -1):
+    def __init__(
+        self,
+        segment_length: float,
+        p_overlap: float,
+        *,
+        min_frequency: float,
+        max_frequency: float,
+        window: Literal["hann", "boxcar"],
+        remove_line_noise: bool,
+        output_dim: int = -1,
+    ):
         super().__init__()
         self.segment_length = segment_length
         self.p_overlap = p_overlap
@@ -49,8 +59,12 @@ class Spectrogram(nn.Module):
         if self.remove_line_noise:
             example_sampling_rate = 2048
             nperseg = round(self.segment_length * example_sampling_rate)
-            freq_bins = torch.fft.rfftfreq(nperseg, d=1.0 / example_sampling_rate)[self.min_frequency_bin : self.max_frequency_bin]  # Calculate frequency bins (in Hz)
-            self.line_noise_mask = self._compute_line_noise_mask(freq_bins=freq_bins, line_noise_freqs=[50, 60], margin=2.0)
+            freq_bins = torch.fft.rfftfreq(nperseg, d=1.0 / example_sampling_rate)[
+                self.min_frequency_bin : self.max_frequency_bin
+            ]  # Calculate frequency bins (in Hz)
+            self.line_noise_mask = self._compute_line_noise_mask(
+                freq_bins=freq_bins, line_noise_freqs=[50, 60], margin=2.0
+            )
         else:
             self.line_noise_mask = None
 
