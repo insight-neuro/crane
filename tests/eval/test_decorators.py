@@ -112,8 +112,8 @@ def test_build_descriptor_raise():
 
 
 def test_finetune_decorator():
-    @finetune(name="finetune_task", param=10)
-    @finetune(name="finetune_task_2", param=20)
+    @finetune("finetune_task", param=10)
+    @finetune("finetune_task_2", param=20)
     def finetune_fn(instance: object, model: BrainModel, extractor: BrainFeatureExtractor, param: int) -> BrainModel:
         return DummyModel(param=param)
 
@@ -128,9 +128,7 @@ def test_finetune_decorator():
 
 
 def test_eval_decorator():
-    @eval(
-        name="eval_task", uses="resource", tags=["tag1", "tag2"], sweep=Sweep(name="sweep", values_or_fn=[True, False])
-    )
+    @eval("eval_task", uses="resource", tags=["tag1", "tag2"], sweep=Sweep(name="sweep", values_or_fn=[True, False]))
     def eval_fn(instance: object, model: BrainModel, extractor: BrainFeatureExtractor, sweep: bool) -> dict[str, Any]:
         return {"result": sweep}
 
