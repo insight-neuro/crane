@@ -1,22 +1,7 @@
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
-from dataclasses import dataclass, field
-from typing import Any
 
 from crane import BrainFeatureExtractor, BrainModel
-from crane.eval.plan import ExecutionPlan
-
-
-@dataclass(frozen=True, slots=True)
-class TaskResult:
-    group: str
-    """Group name."""
-    task_id: str
-    """Task identifier."""
-    metrics: Mapping[str, Any]
-    """Mapping of metric names to their values."""
-    artifacts: Mapping[str, Any] = field(default_factory=dict)
-    """Additional artifacts produced during evaluation."""
+from crane.eval.artifacts import ExecutionPlan, TaskResult
 
 
 class Executor(ABC):
@@ -34,4 +19,4 @@ class Executor(ABC):
         Returns:
             List of TaskResults containing the evaluation results.
         """
-        pass
+        ...

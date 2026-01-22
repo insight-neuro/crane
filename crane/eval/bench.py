@@ -5,14 +5,12 @@ from functools import cached_property
 from types import MappingProxyType
 from typing import Literal
 
-from ..core import BrainFeatureExtractor, BrainModel
-from .data import NeuralData
-from .exec import Executor, SequentialExecutor
-from .exec.base import TaskResult
-from .filter import MatchGroups, MatchTags, TaskFilter
-from .plan import GroupedPlanner, Planner
-from .result import RunResult
-from .tasks import BoundTask
+from crane.core import BrainFeatureExtractor, BrainModel
+from crane.eval.artifacts import BoundTask, RunResult
+from crane.eval.exec import Executor, SequentialExecutor
+from crane.eval.filter import MatchGroups, MatchTags, TaskFilter
+from crane.eval.plan import GroupedPlanner, Planner
+from crane.eval.types import TestFn, TrainFn
 
 
 class BrainBench(ABC):
@@ -36,10 +34,10 @@ class BrainBench(ABC):
         description(): Structured, machine-readable description of the benchmark.
 
     To override (if needed):
-        planner(): Custom planner for building evaluation plans.
-        executor(): Custom executor for running evaluation plans.
-        default_train_fn(): Default training function for finetuning.
-        default_test_fn(): Default testing function for evaluation.
+        planner: Default planner for building evaluation plans.
+        executor: Default executor for running evaluation plans.
+        default_train_fn: Default training function for finetuning.
+        default_test_fn: Default testing function for evaluation.
     """
 
     name: str
@@ -51,6 +49,10 @@ class BrainBench(ABC):
     default_tags: list[str] | None = None
     """Default tags to use if none are specified."""
 
+    default_train_fn: TrainFn = LinearTrainFn()
+    """Default training function for finetuning."""
+    default_test_fn: TestFn = LinearTestFn()
+    """Default testing function for evaluation."""
     planner: Planner = GroupedPlanner()
     """Planner to use for building evaluation plans."""
     executor: Executor = SequentialExecutor()
@@ -70,6 +72,7 @@ class BrainBench(ABC):
 
     def select_tasks(
         self,
+        *,
         task_groups: list[str] | None = None,
         tags: list[str] | Literal["default"] | None = None,
         filters: list[TaskFilter] | None = None,
@@ -128,7 +131,11 @@ class BrainBench(ABC):
         """
 
         # Filter tasks
-        tasks = self.select_tasks(task_groups, tags, filters)
+        tasks = self.select_tasks(
+            task_groups=task_groups,
+            tags=tags,
+            filters=filters,
+        )
 
         # Build plan
         planner = planner or self.planner
@@ -171,18 +178,6 @@ class BrainBench(ABC):
             },
         }
 
-    def default_train_fn(
-        self, model: BrainModel, featurizer: BrainFeatureExtractor, train_data: NeuralData
-    ) -> BrainModel:
-        """Default training function for finetuning. Can be overridden by subclasses."""
-        raise NotImplementedError("Default train function not implemented.")
-
-    def default_test_fn(
-        self, model: BrainModel, featurizer: BrainFeatureExtractor, test_data: NeuralData
-    ) -> TaskResult:
-        """Default testing function for evaluation. Can be overridden by subclasses."""
-        raise NotImplementedError("Default test function not implemented.")
-
     def _collect_tasks(self):
         """Collect tasks from decorated methods."""
         task_groups: dict[str, set[BoundTask]] = defaultdict(set)
@@ -190,9 +185,8 @@ class BrainBench(ABC):
         # Inspect methods for decorated task group definitions
         for _, method in inspect.getmembers(self, inspect.ismethod):
             for spec in getattr(method.__func__, "__bench_tasks__", []):
-                # Call method to create BoundTask instances
-                task_group = method(**spec.kwargs)
-                group = spec.name or task_group.name  # If set: list[BoundTask], else TaskGroup
+                task_group = method(**spec.kwargs)  # Call method to create BoundTask instances
+                group = spec.group or task_group.name  # If set: list[BoundTask], else TaskGroup
 
                 if group in task_groups:
                     raise ValueError(f"Duplicate task group '{group}' defined in {method.__name__}")

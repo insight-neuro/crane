@@ -1,5 +1,5 @@
-from ..tasks import BoundTask
-from .base import TaskFilter
+from crane.eval.artifacts import BoundTask
+from crane.eval.filter.base import TaskFilter
 
 
 class MatchGroups(TaskFilter):
@@ -21,7 +21,7 @@ class MatchTags(TaskFilter):
     """
     Filter that selects tasks containing any of the specified tags.
 
-    Args:
+    Args:s
         tags: List of tags to match.
         match_all: If True, task must contain all tags to be selected.
     """

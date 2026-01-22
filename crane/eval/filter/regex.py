@@ -1,7 +1,7 @@
 import re
 
-from ..tasks import BoundTask
-from .base import TaskFilter
+from crane.eval.artifacts import BoundTask
+from crane.eval.filter.base import TaskFilter
 
 
 class MatchGroupsRe(TaskFilter):

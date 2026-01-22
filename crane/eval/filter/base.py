@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..tasks import BoundTask
+from crane.eval.artifacts import BoundTask
 
 
 class TaskFilter(ABC):
@@ -16,4 +16,4 @@ class TaskFilter(ABC):
         Returns:
             A subset of the provided tasks that meet the selection criteria.
         """
-        pass
+        ...

@@ -1,34 +1,6 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-from dataclasses import dataclass
 
-from ..tasks import BoundTask
-
-
-@dataclass(frozen=True, slots=True)
-class ExecutionUnit:
-    train_key: str
-    train_fn: Callable
-    train_data: object
-    tasks: tuple[BoundTask, ...]
-
-    def __len__(self) -> int:
-        return len(self.tasks)
-
-    def __iter__(self):
-        return iter(self.tasks)
-
-
-@dataclass(frozen=True, slots=True)
-class ExecutionPlan:
-    benchmark: str
-    plan: tuple[ExecutionUnit, ...]
-
-    def __len__(self) -> int:
-        return len(self.plan)
-
-    def __iter__(self):
-        return iter(self.plan)
+from crane.eval.artifacts import BoundTask, ExecutionPlan
 
 
 class Planner(ABC):
@@ -44,4 +16,4 @@ class Planner(ABC):
         Returns:
             An ExecutionPlan detailing how to execute the tasks.
         """
-        pass
+        ...
