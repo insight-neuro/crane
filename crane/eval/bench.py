@@ -1,16 +1,18 @@
 import inspect
 from abc import ABC
 from collections import defaultdict
+from dataclasses import replace
 from functools import cached_property
 from types import MappingProxyType
 from typing import Literal
 
 from crane.core import BrainFeatureExtractor, BrainModel
-from crane.eval.artifacts import BoundTask, RunResult
+from crane.eval.artifacts import RunResult
 from crane.eval.exec import Executor, SequentialExecutor
 from crane.eval.filter import MatchGroups, MatchTags, TaskFilter
 from crane.eval.plan import GroupedPlanner, Planner
-from crane.eval.types import TestFn, TrainFn
+from crane.eval.protocols import TestFn, TrainFn
+from crane.eval.tasks import Task
 
 
 class BrainBench(ABC):
@@ -23,6 +25,10 @@ class BrainBench(ABC):
     Tasks are defined with the `@task_group` decorator and
     collected eagerly at subclass initialization time.
 
+    Args:
+        train_fn (TrainFn): Default training function for finetuning.
+        test_fn (TestFn): Default testing function for evaluation.
+
     Attributes:
         name (str): Human-readable name of the benchmark.
         version (str | None): Version of the benchmark.
@@ -34,10 +40,10 @@ class BrainBench(ABC):
         description(): Structured, machine-readable description of the benchmark.
 
     To override (if needed):
+        train_fn: Default training function for finetuning.
+        test_fn: Default testing function for evaluation.
         planner: Default planner for building evaluation plans.
         executor: Default executor for running evaluation plans.
-        default_train_fn: Default training function for finetuning.
-        default_test_fn: Default testing function for evaluation.
     """
 
     name: str
@@ -49,23 +55,31 @@ class BrainBench(ABC):
     default_tags: list[str] | None = None
     """Default tags to use if none are specified."""
 
-    default_train_fn: TrainFn = LinearTrainFn()
-    """Default training function for finetuning."""
-    default_test_fn: TestFn = LinearTestFn()
-    """Default testing function for evaluation."""
+    train_fn: TrainFn
+    """Training function for finetuning."""
+    test_fn: TestFn
+    """Testing function for evaluation."""
+
     planner: Planner = GroupedPlanner()
     """Planner to use for building evaluation plans."""
     executor: Executor = SequentialExecutor()
     """Executor to use for running evaluation plans."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        train_fn: TrainFn | None = None,
+        test_fn: TestFn | None = None,
+    ) -> None:
+        self.train_fn = train_fn or self.train_fn
+        self.test_fn = test_fn or self.test_fn
+
         task_groups = self._collect_tasks()
         self.task_groups = MappingProxyType({k: frozenset(v) for k, v in task_groups.items()})
 
     @property
-    def tasks(self) -> set[BoundTask]:
+    def tasks(self) -> set[Task]:
         """All collected tasks in the benchmark."""
-        tasks: set[BoundTask] = set()
+        tasks: set[Task] = set()
         for task_group in self.task_groups.values():
             tasks.update(task_group)
         return tasks
@@ -84,9 +98,9 @@ class BrainBench(ABC):
             tags (list[str] | None, default=None): Filter away tasks that don't have any of these. If None, use BenchMark's default_tags if set.
             filters (list[TaskFilter] | None, default=None): Additional custom filters to apply.
         Returns:
-            list[BoundTask]: Filtered list of tasks.
+            list[Task]: Filtered list of tasks.
         """
-        selected_tasks: set[BoundTask] = set(self.tasks)
+        selected_tasks: set[Task] = set(self.tasks)
 
         # Filter by task groups
         if task_groups is not None:
@@ -143,7 +157,7 @@ class BrainBench(ABC):
 
         # Execute plan
         executor = executor or self.executor
-        task_results = executor.run(model, featurizer, plan)
+        task_results = executor.run(self, model, featurizer, plan)
 
         # Finalize results
         return RunResult(
@@ -180,24 +194,25 @@ class BrainBench(ABC):
 
     def _collect_tasks(self):
         """Collect tasks from decorated methods."""
-        task_groups: dict[str, set[BoundTask]] = defaultdict(set)
+        task_groups: dict[str, set[Task]] = defaultdict(set)
 
         # Inspect methods for decorated task group definitions
         for _, method in inspect.getmembers(self, inspect.ismethod):
             for spec in getattr(method.__func__, "__bench_tasks__", []):
-                task_group = method(**spec.kwargs)  # Call method to create BoundTask instances
-                group = spec.group or task_group.name  # If set: list[BoundTask], else TaskGroup
+                task_group = method(**spec.kwargs)  # Call method to create Task instances
+                group = spec.group or task_group.name  # If set: list[Task], else TaskGroup
+
+                if not group:
+                    raise ValueError(
+                        f"Task group name must be specified for tasks defined in {method.__name__}. Cannot be empty."
+                    )
 
                 if group in task_groups:
                     raise ValueError(f"Duplicate task group '{group}' defined in {method.__name__}")
 
                 for task in task_group:
-                    bound = task.bind(
-                        group=group,
-                        default_train_fn=self.default_train_fn,
-                        default_test_fn=self.default_test_fn,
-                        additional_tags=spec.tags,
-                    )
+                    tags = frozenset(task.tags).union(spec.tags)
+                    bound = replace(task, group=group, tags=tags)
                     task_groups[group].add(bound)
 
         return task_groups

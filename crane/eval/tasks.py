@@ -1,37 +1,34 @@
-from collections.abc import Callable
-from dataclasses import dataclass, replace
-from typing import Any, Literal, overload
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass, field, replace
+from typing import Any, overload
 
-from crane.eval.artifacts import BoundTask, TaskSpec
+from crane.eval.artifacts import TaskSpec
 from crane.eval.data import NeuralData
-from crane.eval.types import TestFn, TrainFn
 
 
 @dataclass(frozen=True, slots=True)
 class Task:
+    """Specification of a single evaluation task."""
+
+    group: str = field(init=False, default="")
+    """Name of the task group."""
     train: NeuralData
     """Training data for the task."""
     test: NeuralData
     """Testing data for the task."""
-    train_fn: TrainFn | Literal["default"] = "default"
-    """Override default training function for this task."""
-    test_fn: TestFn | Literal["default"] = "default"
-    """Override default testing function for this task."""
-    tags: list[str] | None = None
+    tags: frozenset[str]
     """Tags associated with the task."""
 
-    def bind(
-        self, *, group: str, default_train_fn: TrainFn, default_test_fn: TestFn, additional_tags: list[str]
-    ) -> BoundTask:
-        frozen_tags = frozenset(self.tags or []) | frozenset(additional_tags)
-        return BoundTask(
-            group=group,
-            train=self.train,
-            test=self.test,
-            train_fn=self.train_fn if self.train_fn != "default" else default_train_fn,
-            test_fn=self.test_fn if self.test_fn != "default" else default_test_fn,
-            tags=frozen_tags,
-        )
+    def __init__(
+        self,
+        train: NeuralData,
+        test: NeuralData,
+        *,
+        tags: Iterable[str] | None = None,
+    ):
+        super().__setattr__("train", train)
+        super().__setattr__("test", test)
+        super().__setattr__("tags", frozenset(tags or []))
 
 
 class TaskGroup:
@@ -40,34 +37,14 @@ class TaskGroup:
     Args:
         name (str): Name of the task group.
         tasks (list[Task]): List of tasks in the group.
-        train_fn (TrainFn | Literal["default"], optional): Default training function for tasks in this
-            group. If "default", uses the benchmark's default_train_fn. Defaults to "default".
-        test_fn (TestFn | Literal["default"], optional): Default testing function for tasks in this
-            group. If "default", uses the benchmark's default_test_fn. Defaults to "default".
-        tags (list[str] | None, optional): Tags associated with the evaluation tasks in this
+        tags (Iterable[str] | None, optional): Tags associated with the evaluation tasks in this
             group. Will be added to each task in the group. Defaults to None.
     """
 
-    def __init__(
-        self,
-        name: str,
-        tasks: list[Task],
-        *,
-        train_fn: TrainFn | Literal["default"] = "default",
-        test_fn: TestFn | Literal["default"] = "default",
-        tags: list[str] | None = None,
-    ):
+    def __init__(self, name: str, tasks: list[Task], *, tags: Iterable[str] | None = None):
         extra_tags = frozenset(tags or [])
         self.name = name
-        self.tasks = [
-            replace(
-                task,
-                train_fn=task.train_fn if task.train_fn != "default" else train_fn,
-                test_fn=task.test_fn if task.test_fn != "default" else test_fn,
-                tags=frozenset(task.tags or []) | extra_tags,
-            )
-            for task in tasks
-        ]
+        self.tasks = [replace(task, tags=task.tags | extra_tags) for task in tasks]
 
     def __iter__(self):
         return iter(self.tasks)

@@ -1,5 +1,5 @@
-from crane.eval.artifacts import BoundTask
 from crane.eval.filter.base import TaskFilter
+from crane.eval.tasks import Task
 
 
 class MatchGroups(TaskFilter):
@@ -13,7 +13,7 @@ class MatchGroups(TaskFilter):
     def __init__(self, *groups: str) -> None:
         self.groups = set(groups)
 
-    def filter(self, tasks: set[BoundTask]) -> set[BoundTask]:
+    def filter(self, tasks: set[Task]) -> set[Task]:
         return {task for task in tasks if task.group in self.groups}
 
 
@@ -34,7 +34,7 @@ class MatchTags(TaskFilter):
         else:
             self.check = lambda task_tags: self.tags.intersection(task_tags)
 
-    def filter(self, tasks: set[BoundTask]) -> set[BoundTask]:
+    def filter(self, tasks: set[Task]) -> set[Task]:
         selected_tasks = set()
         for task in tasks:
             if self.check(task.tags):
