@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -557,7 +557,7 @@
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -719,7 +719,16 @@
 <span class="normal">67</span>
 <span class="normal">68</span>
 <span class="normal">69</span>
-<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MultiSessionDataset</span><span class="p">(</span><span class="n">ConcatDataset</span><span class="p">):</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MultiSessionDataset</span><span class="p">(</span><span class="n">ConcatDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Dataset that concatenates multiple SingleSessionDatasets, with support for glob pattern expansion.</span>
 
@@ -731,7 +740,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_strings</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">context_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">data_root_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([</span><span class="n">SingleSessionDataset</span><span class="p">(</span><span class="n">session_string</span><span class="p">,</span> <span class="n">context_length</span><span class="p">,</span> <span class="n">data_root_dir</span><span class="p">)</span> <span class="k">for</span> <span class="n">session_string</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_session_wildcards</span><span class="p">(</span><span class="n">session_strings</span><span class="p">)])</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">SingleSessionDataset</span><span class="p">(</span><span class="n">session_string</span><span class="p">,</span> <span class="n">context_length</span><span class="p">,</span> <span class="n">data_root_dir</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">session_string</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_session_wildcards</span><span class="p">(</span><span class="n">session_strings</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_root_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root_dir</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_discover_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">require_data_h5</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -739,7 +753,11 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">require_data_h5</span> <span class="ow">or</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;data.h5&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">())]</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">require_data_h5</span> <span class="ow">or</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;data.h5&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span>
+        <span class="p">]</span>
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_expand_session_pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">brainset_pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subject_pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">session_pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -786,7 +804,7 @@
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -962,7 +980,11 @@ This is critical when different sessions have different numbers of channels or s
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span>
-<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SessionBatchSampler</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Sampler</span><span class="p">):</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SessionBatchSampler</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Sampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Batch sampler that ensures each batch only contains samples from a single session.</span>
 <span class="sd">    This is critical when different sessions have different numbers of channels or sampling rates.</span>
@@ -998,7 +1020,11 @@ This is critical when different sessions have different numbers of channels or s
                 <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">session_indices</span><span class="p">)</span>
 
             <span class="c1"># Create batches for this session</span>
-            <span class="n">session_batches</span> <span class="o">=</span> <span class="p">[</span><span class="n">session_indices</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">session_indices</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_last</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">session_indices</span><span class="p">)]</span>
+            <span class="n">session_batches</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">session_indices</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">session_indices</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_last</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">session_indices</span><span class="p">)</span>
+            <span class="p">]</span>
             <span class="n">all_batches</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">session_batches</span><span class="p">)</span>
             <span class="n">start_idx</span> <span class="o">+=</span> <span class="n">size</span>
 
@@ -1017,7 +1043,7 @@ This is critical when different sessions have different numbers of channels or s
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -1259,7 +1285,7 @@ This is critical when different sessions have different numbers of channels or s
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -1335,10 +1361,10 @@ This is critical when different sessions have different numbers of channels or s
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tracking", "navigation.path", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tracking", "navigation.path", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

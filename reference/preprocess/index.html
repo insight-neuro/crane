@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -742,7 +742,7 @@
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -1064,7 +1064,21 @@
 <span class="normal">163</span>
 <span class="normal">164</span>
 <span class="normal">165</span>
-<span class="normal">166</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Spectrogram Preprocessor, computes the spectrogram of iEEG data using STFT.</span>
 
@@ -1079,7 +1093,17 @@
 <span class="sd">        output_dim (int, default=-1): The dimension of the output features. If -1, the output feature dimension will be the same as the number of frequency bins. Otherwise, they will be projected to this dimension.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p_overlap</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">min_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;hann&quot;</span><span class="p">,</span> <span class="s2">&quot;boxcar&quot;</span><span class="p">],</span> <span class="n">remove_line_noise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">segment_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">p_overlap</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">min_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;hann&quot;</span><span class="p">,</span> <span class="s2">&quot;boxcar&quot;</span><span class="p">],</span>
+        <span class="n">remove_line_noise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">=</span> <span class="n">segment_length</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p_overlap</span> <span class="o">=</span> <span class="n">p_overlap</span>
@@ -1107,8 +1131,12 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_line_noise</span><span class="p">:</span>
             <span class="n">example_sampling_rate</span> <span class="o">=</span> <span class="mi">2048</span>
             <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">example_sampling_rate</span><span class="p">)</span>
-            <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">example_sampling_rate</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">min_frequency_bin</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_frequency_bin</span><span class="p">]</span>  <span class="c1"># Calculate frequency bins (in Hz)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">line_noise_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_line_noise_mask</span><span class="p">(</span><span class="n">freq_bins</span><span class="o">=</span><span class="n">freq_bins</span><span class="p">,</span> <span class="n">line_noise_freqs</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">],</span> <span class="n">margin</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+            <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">example_sampling_rate</span><span class="p">)[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">min_frequency_bin</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_frequency_bin</span>
+            <span class="p">]</span>  <span class="c1"># Calculate frequency bins (in Hz)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">line_noise_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_line_noise_mask</span><span class="p">(</span>
+                <span class="n">freq_bins</span><span class="o">=</span><span class="n">freq_bins</span><span class="p">,</span> <span class="n">line_noise_freqs</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">],</span> <span class="n">margin</span><span class="o">=</span><span class="mf">2.0</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">line_noise_mask</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -1227,7 +1255,7 @@
 
 
 
-  <div class="doc doc-children">
+<div class="doc doc-children">
 
 
 
@@ -1327,21 +1355,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/spectrogram.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 71</span>
 <span class="normal"> 72</span>
 <span class="normal"> 73</span>
 <span class="normal"> 74</span>
@@ -1408,7 +1422,21 @@
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
-<span class="normal">138</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform the forward pass of the SpectrogramPreprocessor.</span>
 
@@ -1613,14 +1641,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/rereferencing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
 <span class="normal">138</span>
@@ -1643,7 +1664,16 @@
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
-<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span><span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span><span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply Laplacian rereferencing to a batch of neural data (subtract the mean of the neighbors, as determined by the electrode labels)</span>
 
@@ -1667,7 +1697,9 @@
     <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="c1"># _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)</span>
-    <span class="n">rereferenced_data</span><span class="p">,</span> <span class="n">rereferenced_labels</span><span class="p">,</span> <span class="n">original_electrode_indices</span> <span class="o">=</span> <span class="n">_rereference_electrodes</span><span class="p">(</span><span class="n">electrode_data</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span><span class="p">)</span>
+    <span class="n">rereferenced_data</span><span class="p">,</span> <span class="n">rereferenced_labels</span><span class="p">,</span> <span class="n">original_electrode_indices</span> <span class="o">=</span> <span class="n">_rereference_electrodes</span><span class="p">(</span>
+        <span class="n">electrode_data</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span>
+    <span class="p">)</span>
 
     <span class="c1"># Update batch with rereferenced data</span>
     <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rereferenced_data</span>
@@ -1906,10 +1938,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tracking", "navigation.path", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tracking", "navigation.path", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
