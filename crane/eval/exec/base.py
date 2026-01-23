@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from dataclasses import replace
 
 from crane import BrainFeatureExtractor, BrainModel
 from crane.eval.artifacts import ExecutionPlan, TaskResult
 from crane.eval.bench import BrainBench
+from crane.eval.tasks import Task
 
 
 class Executor(ABC):
@@ -28,3 +31,31 @@ class Executor(ABC):
             List of TaskResults containing the evaluation results.
         """
         ...
+
+
+class TestRunner:
+    """Helper runner class to execute benchmarks with a given test function."""
+
+    def __init__(self, bench: BrainBench, featurizer: BrainFeatureExtractor) -> None:
+        self.bench = bench
+        self.featurizer = featurizer
+
+    def run(self, model: BrainModel, tasks: Sequence[Task]) -> list[TaskResult]:
+        """Run the given tasks and return their results.
+
+        Args:
+            model (BrainModel): The brain model to evaluate.
+            tasks (Sequence[Task]): The tasks to run.
+
+        Returns:
+            list[TaskResult]: The results of running the tasks.
+        """
+        results: list[TaskResult] = []
+        test_fn = self.bench.test_fn
+
+        for task in tasks:
+            result = test_fn(self.bench, model, self.featurizer, task.test)
+            bound = replace(result, group=task.group, task_id=id(task))
+            results.append(bound)
+
+        return results

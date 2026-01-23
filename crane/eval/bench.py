@@ -6,10 +6,13 @@ from functools import cached_property
 from types import MappingProxyType
 from typing import Literal
 
+import torch.nn.functional as F
+
 from crane.core import BrainFeatureExtractor, BrainModel
 from crane.eval.artifacts import RunResult
 from crane.eval.exec import Executor, SequentialExecutor
 from crane.eval.filter import MatchGroups, MatchTags, TaskFilter
+from crane.eval.fns import LinearTrain, ZeroShotEval
 from crane.eval.plan import GroupedPlanner, Planner
 from crane.eval.protocols import TestFn, TrainFn
 from crane.eval.tasks import Task
@@ -40,8 +43,8 @@ class BrainBench(ABC):
         description(): Structured, machine-readable description of the benchmark.
 
     To override (if needed):
-        train_fn: Default training function for finetuning.
-        test_fn: Default testing function for evaluation.
+        train_fn: Default training function for finetuning. By default, LinearTrain(), requires NeuralLabeledData.
+        test_fn: Default testing function for evaluation. By default, ZeroShotEval with MSE metric, requires NeuralLabeledData.
         planner: Default planner for building evaluation plans.
         executor: Default executor for running evaluation plans.
     """
@@ -55,9 +58,9 @@ class BrainBench(ABC):
     default_tags: list[str] | None = None
     """Default tags to use if none are specified."""
 
-    train_fn: TrainFn
+    train_fn: TrainFn = LinearTrain()
     """Training function for finetuning."""
-    test_fn: TestFn
+    test_fn: TestFn = ZeroShotEval({"mse": F.mse_loss})
     """Testing function for evaluation."""
 
     planner: Planner = GroupedPlanner()

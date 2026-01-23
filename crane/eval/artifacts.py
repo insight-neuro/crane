@@ -64,9 +64,9 @@ class ExecutionPlan:
 class TaskResult:
     task_fn: str
     """Name of the task function used for evaluation."""
-    group: str
+    group: str = field(init=False, default="")
     """Group name."""
-    task_id: str
+    task_id: str = field(init=False, default="")
     """Task identifier."""
     metrics: dict[str, Any]
     """Mapping of metric names to their values."""
