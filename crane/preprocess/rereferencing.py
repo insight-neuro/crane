@@ -61,7 +61,9 @@ def _get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str
     laplacian_labels = [label for label, stem in label_to_stem.items() if _has_neighbors(stem, stems)]
 
     # Build neighbors dict using original labels
-    neighbors = {label: _get_neighbors_original_labels(label, label_to_stem, stem_to_labels) for label in laplacian_labels}
+    neighbors = {
+        label: _get_neighbors_original_labels(label, label_to_stem, stem_to_labels) for label in laplacian_labels
+    }
 
     return laplacian_labels, neighbors
 
@@ -90,7 +92,10 @@ def _rereference_electrodes(
         electrode_data = electrode_data.unsqueeze(0)
 
     laplacian_electrodes, laplacian_neighbors = _get_all_laplacian_electrodes(electrode_labels)
-    laplacian_neighbor_indices = {laplacian_electrode_label: [electrode_labels.index(neighbor_label) for neighbor_label in neighbors] for laplacian_electrode_label, neighbors in laplacian_neighbors.items()}
+    laplacian_neighbor_indices = {
+        laplacian_electrode_label: [electrode_labels.index(neighbor_label) for neighbor_label in neighbors]
+        for laplacian_electrode_label, neighbors in laplacian_neighbors.items()
+    }
 
     batch_size, n_electrodes, n_samples = electrode_data.shape
     rereferenced_n_electrodes = len(laplacian_electrodes) if remove_non_laplacian else n_electrodes
@@ -104,7 +109,9 @@ def _rereference_electrodes(
     original_electrode_indices = []
     for original_electrode_index, electrode_label in enumerate(electrode_labels):
         if electrode_label in laplacian_electrodes:
-            rereferenced_data[:, electrode_i] = electrode_data[:, electrode_i] - torch.mean(electrode_data[:, laplacian_neighbor_indices[electrode_label]], dim=1)
+            rereferenced_data[:, electrode_i] = electrode_data[:, electrode_i] - torch.mean(
+                electrode_data[:, laplacian_neighbor_indices[electrode_label]], dim=1
+            )
             original_electrode_indices.append(original_electrode_index)
             electrode_i += 1
         else:
@@ -149,7 +156,9 @@ def laplacian_rereference(batch: dict, remove_non_laplacian: bool = True, inplac
     electrode_labels = batch["channels"]["id"].tolist()
 
     # _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
-    rereferenced_data, rereferenced_labels, original_electrode_indices = _rereference_electrodes(electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian)
+    rereferenced_data, rereferenced_labels, original_electrode_indices = _rereference_electrodes(
+        electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian
+    )
 
     # Update batch with rereferenced data
     batch["ieeg"]["data"] = rereferenced_data

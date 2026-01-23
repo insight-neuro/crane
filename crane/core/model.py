@@ -1,16 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 import torch
 from transformers import PreTrainedModel
-from transformers.utils.generic import ModelOutput
 
+from .artifacts import BrainHeadOutput, BrainOutput
 from .config import BrainConfig
-
-
-@dataclass
-class BrainOutput(ModelOutput):
-    last_hidden_state: torch.FloatTensor
 
 
 class BrainModel(PreTrainedModel, ABC):
@@ -37,3 +31,29 @@ class BrainModel(PreTrainedModel, ABC):
             Dictionary containing model outputs.
         """
         ...
+
+    @staticmethod
+    def with_head(model: "BrainModel", head: torch.nn.Module) -> "BrainModel":
+        """
+        Wraps the base brain model with a task-specific head.
+
+        Args:
+            model: The base brain model.
+            head: The task-specific head module.
+
+        Returns:
+            A new module combining the brain model and the head.
+        """
+
+        class BrainModelWithHead(BrainModel):
+            def __init__(self, backbone: BrainModel, head_module: torch.nn.Module):
+                super().__init__(backbone.config)
+                self.backbone = backbone
+                self.head = head_module
+
+            def forward(self, batch: dict, *args, **kwargs) -> BrainHeadOutput:
+                features = self.backbone(batch, *args, **kwargs)
+                output = self.head(features.last_hidden_state)
+                return BrainHeadOutput.from_features(features, output)
+
+        return BrainModelWithHead(model, head)

@@ -39,7 +39,11 @@ class SessionBatchSampler(torch.utils.data.Sampler):
                 random.shuffle(session_indices)
 
             # Create batches for this session
-            session_batches = [session_indices[i : i + self.batch_size] for i in range(0, len(session_indices), self.batch_size) if not self.drop_last or i + self.batch_size <= len(session_indices)]
+            session_batches = [
+                session_indices[i : i + self.batch_size]
+                for i in range(0, len(session_indices), self.batch_size)
+                if not self.drop_last or i + self.batch_size <= len(session_indices)
+            ]
             all_batches.extend(session_batches)
             start_idx += size
 
