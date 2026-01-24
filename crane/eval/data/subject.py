@@ -10,5 +10,5 @@ class SubjectSession(NeuralData):
     """Identifier for the session."""
 
 
-class SubjectSessionLabeled(SubjectSession, NeuralLabeledData):
+class SubjectSessionLabeled(NeuralLabeledData, SubjectSession):
     """Neural data with labels from a single subject session."""

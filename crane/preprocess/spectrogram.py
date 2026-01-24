@@ -68,28 +68,25 @@ class Spectrogram(nn.Module):
         else:
             self.line_noise_mask = None
 
-    def forward(self, batch: dict, z_score: bool = True) -> torch.Tensor:
+    def forward(self, data: torch.Tensor, sampling_rate: int, z_score: bool = True) -> torch.Tensor:
         """
         Perform the forward pass of the SpectrogramPreprocessor.
 
         Args:
-            batch (dict): A dictionary containing:
-                - 'ieeg': A dictionary with:
-                    - 'data': A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.
-                    - 'sampling_rate': An integer representing the sampling rate of the iEEG data.
+            data (torch.Tensor): A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.
+            sampling_rate (int): An integer representing the sampling rate of the iEEG data.
             z_score (bool): Whether to apply z-score normalization to the spectrogram. Default is True.
 
         Returns:
             torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).
         """
-        batch_size, n_electrodes, n_samples = batch["ieeg"]["data"].shape
+        batch_size, n_electrodes, n_samples = data.shape
 
         # Reshape for STFT
-        x = batch["ieeg"]["data"].reshape(batch_size * n_electrodes, -1)
+        x = data.reshape(batch_size * n_electrodes, -1)
         x = x.to(dtype=torch.float32)  # Convert to float32 for STFT
 
         # STFT parameters
-        sampling_rate = batch["ieeg"]["sampling_rate"]
         nperseg = round(self.segment_length * sampling_rate)
         noverlap = round(self.p_overlap * nperseg)
         hop_length = nperseg - noverlap
@@ -148,7 +145,7 @@ class Spectrogram(nn.Module):
         # Transform to match expected output dimension
         x = self.output_transform(x)  # shape: (batch_size, n_electrodes, n_timebins, output_dim)
 
-        x = x.to(dtype=batch["ieeg"]["data"].dtype)
+        x = x.to(dtype=data.dtype)
         return x
 
     def _compute_line_noise_mask(
