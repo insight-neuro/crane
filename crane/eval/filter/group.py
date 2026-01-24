@@ -32,7 +32,7 @@ class MatchTags(TaskFilter):
         if match_all:
             self.check = lambda task_tags: self.tags.issubset(task_tags)
         else:
-            self.check = lambda task_tags: self.tags.intersection(task_tags)
+            self.check = lambda task_tags: len(self.tags & task_tags) > 0
 
     def filter(self, tasks: set[Task]) -> set[Task]:
         selected_tasks = set()

@@ -55,7 +55,7 @@ class TestRunner:
 
         for task in tasks:
             result = test_fn(self.bench, model, self.featurizer, task.test)
-            bound = replace(result, group=task.group, task_id=id(task))
+            bound = replace(result, group=task.group, task_id=str(id(task)))
             results.append(bound)
 
         return results
