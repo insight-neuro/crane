@@ -2,16 +2,65 @@
 
 Crane is a comprehensive library designed to facilitate the development and training of machine learning models for neural data. It provides tools for data handling and common neural model components, making it easier to build and experiment with models in this domain. Crane emphasizes interoperability, reproducibility, and ease of use, allowing researchers to share models and preprocessing pipelines seamlessly.
 
-## Features
+## Building your Model
 
-- **Framework, not implementation**: Provides interfaces and infrastructure, not models
-- **HuggingFace compatible**: Inherits from HuggingFace Transformers for familiarity, ease of use, and Hub integration
-- **Modular components**: Clear separation of models, training, evaluation, and data handling
-- **Lab-to-lab interoperability**: Standard interface enables model sharing
+To build a model in Crane, you typically need to implement two main components:
+- A `BrainModel` subclass that defines your model architecture and forward pass
+- A `BrainFeatureExtractor` subclass that handles data preprocessing, feature extraction and tokenization.
+
+Once these components are defined, you can easily train, evaluate, and share your model using Crane's built-in tools.
+
+Example:
+
+```python
+from crane import BrainFeaturizer, BrainModel, BrainOutput
+from crane.preprocessing import (
+    laplacian_rereference,
+    zscore_normalize,
+    select_electrodes,
+)
+
+class SEEGFeaturizer(BrainFeatureExtractor):
+
+    def preprocess(self, neural_data, **kwargs):
+        # Use crane's preprocessing utilities
+        
+        # 1. Re-reference
+        neural_data = laplacian_rereference(neural_data)
+        
+        # 2. Select electrodes
+        neural_data = select_electrodes(
+            neural_data,
+            max_electrodes=self.config.max_electrodes,
+            strategy='variance'
+        )
+        
+        # 3. Normalize
+        neural_data = zscore_normalize(neural_data, dim=(1, 2))
+        
+        return neural_data
+
+
+class SEEGTransformer(BrainModel):
+    def __init__(self, config):
+        super().__init__(config)
+        # Define model layers here
+        self.transformer = torch.nn.Transformer(
+            d_model=config.hidden_size,
+            nhead=config.num_heads,
+            num_encoder_layers=config.num_layers,
+            num_decoder_layers=config.num_layers,
+        )
+
+    def forward(self, features, **kwargs) > BrainOutput:
+        # Forward pass through transformer
+        last_hidden_state = self.transformer(features)
+        return BrainOutput(last_hidden_state=last_hidden_state)
+```
 
 ## Data Format
 While not required for `crane`, we recommend storing the data in the following `temporaldata` format, which strikes a balance between flexibility and speed of I/O.
-Please see the ieeg-data repository for the detailed documentation and implementation.
+Please see the [ieeg-data](https://github.com/insight-neuro/ieeg-data) repository for the detailed documentation and implementation.
 ```python
 session = Data(
     # metadata
@@ -73,81 +122,9 @@ session = Data(
 )
 ```
 
-## Building your Model
-
-To build a model in Crane, you typically need to implement two main components:
-- A `BrainModel` subclass that defines your model architecture and forward pass
-- A `BrainFeatureExtractor` subclass that handles data preprocessing and feature extraction
-
-Once these components are defined, you can easily train, evaluate, and share your model using Crane's built-in tools.
-
-Example:
-
-```python
-import crane
-from crane.preprocessing import (
-    laplacian_rereference,
-    zscore_normalize,
-    compute_spectrogram,
-    select_electrodes,
-)
-
-class SEEGFeaturizer(crane.BrainFeatureExtractor):
-
-    def preprocess(self, neural_data, **kwargs):
-        # Use crane's preprocessing utilities
-        
-        # 1. Re-reference
-        if self.config.rereferencing == 'laplacian':
-            neural_data = laplacian_rereference(neural_data)
-        elif self.config.rereferencing == 'car':
-            neural_data = common_average_rereference(neural_data)
-        
-        # 2. Select electrodes
-        neural_data = select_electrodes(
-            neural_data,
-            max_electrodes=self.config.max_electrodes,
-            strategy='variance'
-        )
-        
-        # 3. Normalize
-        neural_data = zscore_normalize(neural_data, dim=(1, 2))
-        
-        return neural_data
-
-
-class SEEGTransformer(crane.BrainModel):
-    
-    def __init__(self, config):
-        super().__init__(config)
-        # Define model layers here
-        self.transformer = torch.nn.Transformer(
-            d_model=config.hidden_size,
-            nhead=config.num_heads,
-            num_encoder_layers=config.num_layers,
-            num_decoder_layers=config.num_layers,
-        )
-
-    def forward(self, features, **kwargs):
-        # Forward pass through transformer
-        transformer_output = self.transformer(features)
-        return transformer_output
-
-```
-
-
-**Key Design Decisions:**
-- All functions are pure, stateless transformations
-- Work with batched data (batch, channels, time)
-- Consistent API across all preprocessing functions
-- Type hints and comprehensive docstrings
-- Users can import and compose as needed
-
-
-
 ## Design Reusable Benchmarks
 
-Crane is designed to make it simple to share benchmarks across labs. A benchmark typically inherits from `crane.eval.BrainBenchmark` and implements the `evaluate` method. Optionqlly, it can also implement `fine_tune` if the benchmark requires task-specific fine-tuning.
+Crane is designed to make it simple to share benchmarks across labs. A benchmark typically inherits from `crane.eval.BrainBenchmark` and implements `task_group` functions.
 
 ```python
 from crane.eval import BrainBenchmark
@@ -282,6 +259,7 @@ print(results)
 ```
 
 **Key Benefit:** Preprocessing travels with the model automatically. Lab B doesn't need to know Lab A's preprocessing details - it just works.
+
 
 
 
