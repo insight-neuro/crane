@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 import torch
 from transformers import PreTrainedModel
 
-from .artifacts import BrainHeadOutput, BrainOutput
 from .config import BrainConfig
+from .output import BrainHeadOutput, BrainOutput
 
 
 class BrainModel(PreTrainedModel, ABC):
@@ -53,7 +53,7 @@ class BrainModel(PreTrainedModel, ABC):
 
             def forward(self, batch: dict, *args, **kwargs) -> BrainHeadOutput:
                 features = self.backbone(batch, *args, **kwargs)
-                output = self.head(features.last_hidden_state)
-                return BrainHeadOutput.from_features(features, output)
+                outputs = self.head(features.last_hidden_state)
+                return BrainHeadOutput.from_features(features, outputs)
 
         return BrainModelWithHead(model, head)

@@ -16,7 +16,7 @@ class Task:
     """Training data for the task."""
     test: NeuralData
     """Testing data for the task."""
-    tags: frozenset[str]
+    tags: frozenset[str] = field(default_factory=frozenset)
     """Tags associated with the task."""
 
     def __init__(
