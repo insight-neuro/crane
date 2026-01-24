@@ -1075,10 +1075,7 @@
 <span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Spectrogram Preprocessor, computes the spectrogram of iEEG data using STFT.</span>
 
@@ -1140,28 +1137,25 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">line_noise_mask</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the forward pass of the SpectrogramPreprocessor.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            batch (dict): A dictionary containing:</span>
-<span class="sd">                - &#39;ieeg&#39;: A dictionary with:</span>
-<span class="sd">                    - &#39;data&#39;: A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.</span>
-<span class="sd">                    - &#39;sampling_rate&#39;: An integer representing the sampling rate of the iEEG data.</span>
+<span class="sd">            data (torch.Tensor): A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.</span>
+<span class="sd">            sampling_rate (int): An integer representing the sampling rate of the iEEG data.</span>
 <span class="sd">            z_score (bool): Whether to apply z-score normalization to the spectrogram. Default is True.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="c1"># Reshape for STFT</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># Convert to float32 for STFT</span>
 
         <span class="c1"># STFT parameters</span>
-        <span class="n">sampling_rate</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;sampling_rate&quot;</span><span class="p">]</span>
         <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">sampling_rate</span><span class="p">)</span>
         <span class="n">noverlap</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_overlap</span> <span class="o">*</span> <span class="n">nperseg</span><span class="p">)</span>
         <span class="n">hop_length</span> <span class="o">=</span> <span class="n">nperseg</span> <span class="o">-</span> <span class="n">noverlap</span>
@@ -1220,7 +1214,7 @@
         <span class="c1"># Transform to match expected output dimension</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape: (batch_size, n_electrodes, n_timebins, output_dim)</span>
 
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_line_noise_mask</span><span class="p">(</span>
@@ -1270,7 +1264,7 @@
 
 
 <h3 id="crane.preprocess.Spectrogram.forward" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">forward</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">z_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">forward</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">z_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1293,17 +1287,30 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>batch</code>
+                <code>data</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span></code>
+                  <code><span title="torch.Tensor">Tensor</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary containing:
-- 'ieeg': A dictionary with:
-    - 'data': A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.
-    - 'sampling_rate': An integer representing the sampling rate of the iEEG data.</p>
+                <p>A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sampling_rate</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An integer representing the sampling rate of the iEEG data.</p>
               </div>
             </td>
             <td>
@@ -1433,31 +1440,25 @@
 <span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform the forward pass of the SpectrogramPreprocessor.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        batch (dict): A dictionary containing:</span>
-<span class="sd">            - &#39;ieeg&#39;: A dictionary with:</span>
-<span class="sd">                - &#39;data&#39;: A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.</span>
-<span class="sd">                - &#39;sampling_rate&#39;: An integer representing the sampling rate of the iEEG data.</span>
+<span class="sd">        data (torch.Tensor): A tensor of shape (batch_size, n_electrodes, n_samples) representing the iEEG data.</span>
+<span class="sd">        sampling_rate (int): An integer representing the sampling rate of the iEEG data.</span>
 <span class="sd">        z_score (bool): Whether to apply z-score normalization to the spectrogram. Default is True.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
 
     <span class="c1"># Reshape for STFT</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># Convert to float32 for STFT</span>
 
     <span class="c1"># STFT parameters</span>
-    <span class="n">sampling_rate</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;sampling_rate&quot;</span><span class="p">]</span>
     <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">sampling_rate</span><span class="p">)</span>
     <span class="n">noverlap</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_overlap</span> <span class="o">*</span> <span class="n">nperseg</span><span class="p">)</span>
     <span class="n">hop_length</span> <span class="o">=</span> <span class="n">nperseg</span> <span class="o">-</span> <span class="n">noverlap</span>
@@ -1516,7 +1517,7 @@
     <span class="c1"># Transform to match expected output dimension</span>
     <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape: (batch_size, n_electrodes, n_timebins, output_dim)</span>
 
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">x</span>
 </code></pre></div></td></tr></table></div>
             </details>
