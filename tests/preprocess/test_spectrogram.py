@@ -2,11 +2,12 @@ import pytest
 import torch
 
 from crane.preprocess import Spectrogram
+# TODO: Fix the tests to pass arguments correctly to the make_batch fixture.
 
 
 @pytest.mark.parametrize("window", ["hann", "boxcar"])
 def test_shape_dtype_and_windows(window, make_batch):
-    batch = make_batch()
+    batch = make_batch()["ieeg"]
     seg_len = 0.5  # s -> nperseg = 128 @ 256 Hz
     proc = Spectrogram(
         segment_length=seg_len,
@@ -17,8 +18,8 @@ def test_shape_dtype_and_windows(window, make_batch):
         remove_line_noise=False,
         output_dim=-1,
     )
-    out = proc(batch)
-    assert out.dtype == batch["ieeg"]["data"].dtype  # dtype preserved
+    out = proc(**batch)
+    assert out.dtype == batch["data"].dtype  # dtype preserved
 
     B, E, _, _ = out.shape
     assert (B, E) == (2, 3)
@@ -31,7 +32,7 @@ def test_shape_dtype_and_windows(window, make_batch):
 
 
 def test_output_dim_projection(make_batch):
-    batch = make_batch()
+    batch = make_batch()["ieeg"]
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -41,12 +42,12 @@ def test_output_dim_projection(make_batch):
         remove_line_noise=False,
         output_dim=32,
     )
-    out = proc(batch)
+    out = proc(**batch)
     assert out.shape[-1] == 32  # projected to requested dim
 
 
 def test_zscore_normalization_centers_over_batch_and_time(make_batch):
-    batch = make_batch()
+    batch = make_batch()["ieeg"]
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -57,7 +58,7 @@ def test_zscore_normalization_centers_over_batch_and_time(make_batch):
         output_dim=-1,
     )
     with torch.no_grad():
-        out = proc(batch, z_score=True)
+        out = proc(**batch, z_score=True)
 
     # Mean/std computed over batch and time per electrode & freq in the module.
     # Check they are approximately centered/scaled (tolerant due to eps in denom).
@@ -68,7 +69,7 @@ def test_zscore_normalization_centers_over_batch_and_time(make_batch):
 
 
 def test_line_noise_mask_zeroes_masked_bins(make_batch):
-    batch = make_batch()
+    batch = make_batch()["ieeg"]
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -83,14 +84,14 @@ def test_line_noise_mask_zeroes_masked_bins(make_batch):
     assert masked_idx.numel() > 0  # we expect some bins around 50/60 Hz
 
     with torch.no_grad():
-        out = proc(batch, z_score=False)  # z_score off to simplify check
+        out = proc(**batch, z_score=False)  # z_score off to simplify check
 
     # All masked frequency bins should be exactly zero for every batch, electrode, time
     masked_vals = out[..., masked_idx]
     assert torch.count_nonzero(masked_vals) == 0
 
 
-def test_compute_line_noise_mask(make_batch):
+def test_compute_line_noise_mask():
     # Create a dummy frequency bins tensor
     freq_bins = torch.linspace(0, 100, steps=201)  # 0 to 100 Hz with 0.5 Hz steps
 
