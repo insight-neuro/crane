@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import replace
 from functools import cached_property
 from types import MappingProxyType
-from typing import Literal
+from typing import Literal, ClassVar
 
 import torch.nn.functional as F
 
@@ -49,13 +49,13 @@ class BrainBench(ABC):
         executor: Default executor for running evaluation plans.
     """
 
-    name: str
+    name: ClassVar[str]
     """Human-readable name of the benchmark."""
-    version: str | None = None
+    version: ClassVar[str | None] = None
     """Version of the benchmark."""
-    reference: str | None = None
+    reference: ClassVar[str | None] = None
     """Reference or citation for the benchmark."""
-    default_tags: list[str] | None = None
+    default_tags: ClassVar[list[str] | None] = None
     """Default tags to use if none are specified."""
 
     train_fn: TrainFn = LinearTrain()

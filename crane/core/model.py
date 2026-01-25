@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import ClassVar
 
 import torch
 from transformers import PreTrainedModel
@@ -13,9 +14,9 @@ class BrainModel(PreTrainedModel, ABC):
     Inherits from PreTrainedModel for HuggingFace Hub compatibility.
     """
 
-    config_class = BrainConfig
-    base_model_prefix = "brain_model"
-    supports_gradient_checkpointing = True
+    config_class: ClassVar[type[BrainConfig]] = BrainConfig
+    base_model_prefix: ClassVar[str] = "brain_model"
+    supports_gradient_checkpointing: ClassVar[bool] = True
 
     @abstractmethod
     def forward(self, batch: dict, *args, **kwargs) -> BrainOutput:
