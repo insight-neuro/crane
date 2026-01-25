@@ -1,35 +1,45 @@
-from copy import deepcopy
+from typing import overload
 
 import numpy as np
+import torch
+
+from ..data.structures import ChannelDict
 
 
-def subset_electrodes(batch: dict, max_n_electrodes: int, inplace: bool = False) -> dict:
+@overload
+def subset_electrodes(
+    data: torch.Tensor,
+    channels: np.ndarray,
+    max_n_electrodes: int,
+) -> tuple[torch.Tensor, np.ndarray]: ...
+
+
+@overload
+def subset_electrodes(
+    data: torch.Tensor,
+    channels: ChannelDict,
+    max_n_electrodes: int,
+) -> tuple[torch.Tensor, ChannelDict]: ...
+
+
+def subset_electrodes(
+    data: torch.Tensor,
+    channels: np.ndarray | ChannelDict,
+    max_n_electrodes: int,
+) -> tuple[torch.Tensor, np.ndarray | ChannelDict]:
     """
     Subset the electrodes to a maximum number of electrodes.
 
     Args:
-        batch (dict): dictionary from SingleSessionDataset with keys:
-            'ieeg': {'data': torch.Tensor[batch_size, n_channels, n_samples], 'sampling_rate': int}
-            'channels': {'id': np.array}
-            'metadata': dict
-        max_n_electrodes (int): the maximum number of electrodes to subset to
-        inplace (bool): if True, modify the batch dictionary in place
+        data (torch.Tensor): iEEG data tensor of shape (n_samples, n_electrodes)
+        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict
+        max_n_electrodes (int): Maximum number of electrodes to keep.
 
-    Returns:
-        batch: dictionary with subsetted data.
     """
-    if not inplace:
-        batch = deepcopy(batch)
 
-    electrode_data = batch["ieeg"]["data"]  # shape: (n_electrodes, n_samples)
-    electrode_labels = batch["channels"]["id"]
+    if len(data) > max_n_electrodes:  # Else no-op
+        selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
+        data = data[:, selected_indices, :]
+        channels = channels[selected_indices]
 
-    if len(electrode_labels) > max_n_electrodes:  # Else no-op
-        selected_indices = np.random.choice(len(electrode_labels), max_n_electrodes, replace=False)
-        electrode_data = electrode_data[:, selected_indices, :]
-        electrode_labels = electrode_labels[selected_indices]
-
-    batch["ieeg"]["data"] = electrode_data
-    batch["channels"]["id"] = electrode_labels
-
-    return batch
+    return data, channels

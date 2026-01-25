@@ -24,6 +24,9 @@ class ChannelDict(ArrayDict):  # shape: (n_channels,)
     brain_area: np.ndarray
     """Brain area"""
 
+    def __getitem__(self, key):  # Splicing support
+        return ChannelDict(**{field: getattr(self, field)[key] for field in self.__annotations__})
+
 
 class CraneData(Data):
     brainset: str

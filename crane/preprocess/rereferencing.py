@@ -1,7 +1,9 @@
 from collections import defaultdict
+from typing import overload
 
-import numpy as np
 import torch
+
+from ..data.structures import ChannelDict
 
 
 def _get_all_laplacian_electrodes(electrode_labels: list[str]) -> tuple[list[str], dict]:
@@ -85,6 +87,7 @@ def _rereference_electrodes(
         rereferenced_data,rereferenced_labels (tuple[torch.Tensor, list[str]]): A tuple containing:
             rereferenced_data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes_rereferenced, n_samples) or (n_electrodes_rereferenced, n_samples)
             rereferenced_labels (list of str): list of electrode labels of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)
+            original_electrode_indices (list of int): list of indices of the original electrodes that were kept after rereferencing
     """
     batch_unsqueeze = False
     if len(electrode_data.shape) == 2:
@@ -132,36 +135,47 @@ def _rereference_electrodes(
     )
 
 
-def laplacian_rereference(batch: dict, remove_non_laplacian: bool = True, inplace: bool = False):
+@overload
+def laplacian_rereference(
+    data: torch.Tensor, channels: list[str], remove_non_laplacian: bool = True
+) -> tuple[torch.Tensor, list[str]]: ...
+
+
+@overload
+def laplacian_rereference(
+    data: torch.Tensor, channels: ChannelDict, remove_non_laplacian: bool = True
+) -> tuple[torch.Tensor, ChannelDict]: ...
+
+
+def laplacian_rereference(
+    data: torch.Tensor, channels: list[str] | ChannelDict, remove_non_laplacian: bool = True
+) -> tuple[torch.Tensor, list[str] | ChannelDict]:
     """
-    Apply Laplacian rereferencing to a batch of neural data (subtract the mean of the neighbors, as determined by the electrode labels)
+    Apply Laplacian rereferencing to a batch of neural data
+    (subtract the mean of the neighbors, as determined by the electrode labels)
 
     Args:
-        batch (dict): dictionary from SingleSessionDataset with keys:
-            'ieeg': {'data': torch.Tensor[batch_size, n_channels, n_samples], 'sampling_rate': int}
-            'channels': {'id': np.array}
-            'metadata': dict
-        remove_non_laplacian (bool, default=True): if True, remove the non-laplacian electrodes from the data
-        inplace (bool, default=False): if True, modify the batch dictionary in place
+        data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples).
+        channels (list of str or ChannelDict): list of electrode labels or ChannelDict
+        remove_non_laplacian (bool): if True, remove the non-laplacian electrodes from the data; if false, keep them without rereferencing
 
     Returns:
-        batch (dict): dictionary with rereferenced data:
-            'ieeg': {'data': torch.Tensor[batch_size, n_channels_rereferenced, n_samples], 'sampling_rate': int}
-            'channels': {'id': np.array}
-            'metadata': dict
+        rereferenced_data,updated_channels (tuple[torch.Tensor, list of str or ChannelDict]): A tuple containing:
+            rereferenced_data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes_rereferenced, n_samples) or (n_electrodes_rereferenced, n_samples)
+            updated_channels (list of str or ChannelDict): list of electrode labels or ChannelDict of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)
     """
-    assert inplace, "laplacian_rereference_batch currently only supports inplace=True"
 
-    electrode_data = batch["ieeg"]["data"]  # shape: (n_electrodes, n_samples)
-    electrode_labels = batch["channels"]["id"].tolist()
+    electrode_labels = channels if isinstance(channels, list) else channels.id.tolist()
 
     # _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
     rereferenced_data, rereferenced_labels, original_electrode_indices = _rereference_electrodes(
-        electrode_data, electrode_labels, remove_non_laplacian=remove_non_laplacian
+        data, electrode_labels, remove_non_laplacian=remove_non_laplacian
     )
 
-    # Update batch with rereferenced data
-    batch["ieeg"]["data"] = rereferenced_data
-    batch["channels"]["id"] = np.array(rereferenced_labels)
+    # Update with rereferenced data
+    if isinstance(channels, ChannelDict):
+        label_set = set(rereferenced_labels)
+        indices = [i for i, label in enumerate(electrode_labels) if label in label_set]
+        channels = channels[indices]
 
-    return batch
+    return data, channels
