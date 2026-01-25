@@ -1,9 +1,37 @@
 import random
 
 import torch
+from torch.utils.data import Sampler
+
+from crane.data.structures import CraneBatch
 
 
-class SessionBatchSampler(torch.utils.data.Sampler):
+def collate_crane_batches(batch_list: list[CraneBatch]) -> CraneBatch:
+    """
+    Collate a list of CraneBatch objects into a single CraneBatch.
+    Assumes all batches belong to the same brainset/subject/session.
+
+    Args:
+        batch_list (list[CraneBatch]): List of CraneBatch objects to collate.
+
+    Returns:
+        CraneBatch: Collated batch.
+    """
+    data_tensors = [batch.data for batch in batch_list]
+    collated_data = torch.stack(data_tensors, dim=1)  # shape: (n_samples, batch_size, n_channels)
+
+    return CraneBatch(
+        brainset=batch_list[0].brainset,
+        subject=batch_list[0].subject,
+        session=batch_list[0].session,
+        citation=batch_list[0].citation,
+        sampling_rate=batch_list[0].sampling_rate,
+        data=collated_data,
+        channels=batch_list[0].channels,
+    )
+
+
+class SessionBatchSampler(Sampler):
     """
     Batch sampler that ensures each batch only contains samples from a single session.
     This is critical when different sessions have different numbers of channels or sampling rates.
