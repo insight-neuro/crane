@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from crane.preprocess import Spectrogram
-# TODO: Fix the tests to pass arguments correctly to the make_batch fixture.
 
 
 @pytest.mark.parametrize("window", ["hann", "boxcar"])
