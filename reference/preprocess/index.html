@@ -1538,14 +1538,27 @@
 
 
 <h2 id="crane.preprocess.laplacian_rereference" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">laplacian_rereference</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">laplacian_rereference</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h2>
+          <div class="doc-overloads">
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">laplacian_rereference</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">laplacian_rereference</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="n">ChannelDict</span><span class="p">,</span>
+    <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">]</span>
+</code></pre></div>          </div>
 
 
     <div class="doc doc-contents ">
 
-        <p>Apply Laplacian rereferencing to a batch of neural data (subtract the mean of the neighbors, as determined by the electrode labels)</p>
+        <p>Apply Laplacian rereferencing to a batch of neural data
+(subtract the mean of the neighbors, as determined by the electrode labels)</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1561,17 +1574,30 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>batch</code>
+                <code>data</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span></code>
+                  <code><span title="torch.Tensor">Tensor</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>dictionary from SingleSessionDataset with keys:
-'ieeg': {'data': torch.Tensor[batch_size, n_channels, n_samples], 'sampling_rate': int}
-'channels': {'id': np.array}
-'metadata': dict</p>
+                <p>torch tensor of shape (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>channels</code>
+            </td>
+            <td>
+                  <code>list of str or ChannelDict</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list of electrode labels or ChannelDict</p>
               </div>
             </td>
             <td>
@@ -1583,31 +1609,15 @@
                 <code>remove_non_laplacian</code>
             </td>
             <td>
-                  <code>bool, default=True</code>
+                  <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if True, remove the non-laplacian electrodes from the data</p>
+                <p>if True, remove the non-laplacian electrodes from the data; if false, keep them without rereferencing</p>
               </div>
             </td>
             <td>
                   <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>inplace</code>
-            </td>
-            <td>
-                  <code>bool, default=False</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if True, modify the batch dictionary in place</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
             </td>
           </tr>
       </tbody>
@@ -1618,21 +1628,20 @@
     <table>
       <thead>
         <tr>
-<th>Name</th>          <th>Type</th>
+          <th>Type</th>
           <th>Description</th>
         </tr>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-<td><code>batch</code></td>            <td>
-                  <code><span title="dict">dict</span></code>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="torch.Tensor">Tensor</span>, <span title="list">list</span>[<span title="str">str</span>] | <span title="crane.data.structures.ChannelDict">ChannelDict</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>dictionary with rereferenced data:
-'ieeg': {'data': torch.Tensor[batch_size, n_channels_rereferenced, n_samples], 'sampling_rate': int}
-'channels': {'id': np.array}
-'metadata': dict</p>
+                <p>rereferenced_data,updated_channels (tuple[torch.Tensor, list of str or ChannelDict]): A tuple containing:
+rereferenced_data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes_rereferenced, n_samples) or (n_electrodes_rereferenced, n_samples)
+updated_channels (list of str or ChannelDict): list of electrode labels or ChannelDict of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)</p>
               </div>
             </td>
           </tr>
@@ -1642,22 +1651,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/rereferencing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">150</span>
 <span class="normal">151</span>
 <span class="normal">152</span>
 <span class="normal">153</span>
@@ -1674,39 +1668,52 @@
 <span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
-<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span><span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Apply Laplacian rereferencing to a batch of neural data (subtract the mean of the neighbors, as determined by the electrode labels)</span>
+<span class="sd">    Apply Laplacian rereferencing to a batch of neural data</span>
+<span class="sd">    (subtract the mean of the neighbors, as determined by the electrode labels)</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        batch (dict): dictionary from SingleSessionDataset with keys:</span>
-<span class="sd">            &#39;ieeg&#39;: {&#39;data&#39;: torch.Tensor[batch_size, n_channels, n_samples], &#39;sampling_rate&#39;: int}</span>
-<span class="sd">            &#39;channels&#39;: {&#39;id&#39;: np.array}</span>
-<span class="sd">            &#39;metadata&#39;: dict</span>
-<span class="sd">        remove_non_laplacian (bool, default=True): if True, remove the non-laplacian electrodes from the data</span>
-<span class="sd">        inplace (bool, default=False): if True, modify the batch dictionary in place</span>
+<span class="sd">        data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples).</span>
+<span class="sd">        channels (list of str or ChannelDict): list of electrode labels or ChannelDict</span>
+<span class="sd">        remove_non_laplacian (bool): if True, remove the non-laplacian electrodes from the data; if false, keep them without rereferencing</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        batch (dict): dictionary with rereferenced data:</span>
-<span class="sd">            &#39;ieeg&#39;: {&#39;data&#39;: torch.Tensor[batch_size, n_channels_rereferenced, n_samples], &#39;sampling_rate&#39;: int}</span>
-<span class="sd">            &#39;channels&#39;: {&#39;id&#39;: np.array}</span>
-<span class="sd">            &#39;metadata&#39;: dict</span>
+<span class="sd">        rereferenced_data,updated_channels (tuple[torch.Tensor, list of str or ChannelDict]): A tuple containing:</span>
+<span class="sd">            rereferenced_data (torch.Tensor): torch tensor of shape (batch_size, n_electrodes_rereferenced, n_samples) or (n_electrodes_rereferenced, n_samples)</span>
+<span class="sd">            updated_channels (list of str or ChannelDict): list of electrode labels or ChannelDict of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">inplace</span><span class="p">,</span> <span class="s2">&quot;laplacian_rereference_batch currently only supports inplace=True&quot;</span>
 
-    <span class="n">electrode_data</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>  <span class="c1"># shape: (n_electrodes, n_samples)</span>
-    <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">channels</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">channels</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="c1"># _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)</span>
     <span class="n">rereferenced_data</span><span class="p">,</span> <span class="n">rereferenced_labels</span><span class="p">,</span> <span class="n">original_electrode_indices</span> <span class="o">=</span> <span class="n">_rereference_electrodes</span><span class="p">(</span>
-        <span class="n">electrode_data</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span>
     <span class="p">)</span>
 
-    <span class="c1"># Update batch with rereferenced data</span>
-    <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rereferenced_data</span>
-    <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rereferenced_labels</span><span class="p">)</span>
+    <span class="c1"># Update with rereferenced data</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">):</span>
+        <span class="n">label_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">rereferenced_labels</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">electrode_labels</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">label_set</span><span class="p">]</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">batch</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1717,9 +1724,21 @@
 
 
 <h2 id="crane.preprocess.subset_electrodes" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="p">)</span></code>
 
 </h2>
+          <div class="doc-overloads">
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">subset_electrodes</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">subset_electrodes</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="n">ChannelDict</span><span class="p">,</span>
+    <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">]</span>
+</code></pre></div>          </div>
 
 
     <div class="doc doc-contents ">
@@ -1740,17 +1759,30 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>batch</code>
+                <code>data</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span></code>
+                  <code><span title="torch.Tensor">Tensor</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>dictionary from SingleSessionDataset with keys:
-'ieeg': {'data': torch.Tensor[batch_size, n_channels, n_samples], 'sampling_rate': int}
-'channels': {'id': np.array}
-'metadata': dict</p>
+                <p>iEEG data tensor of shape (n_samples, n_electrodes)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>channel_ids</code>
+            </td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span> | <span title="crane.data.structures.ChannelDict">ChannelDict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Array of channel IDs or ChannelDict</p>
               </div>
             </td>
             <td>
@@ -1766,50 +1798,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>the maximum number of electrodes to subset to</p>
+                <p>Maximum number of electrodes to keep.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>inplace</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if True, modify the batch dictionary in place</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>batch</code></td>            <td>
-                  <code><span title="dict">dict</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>dictionary with subsetted data.</p>
-              </div>
             </td>
           </tr>
       </tbody>
@@ -1818,26 +1811,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/electrode_subset.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">25</span>
 <span class="normal">26</span>
 <span class="normal">27</span>
 <span class="normal">28</span>
@@ -1847,36 +1821,37 @@
 <span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
-<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span><span class="n">batch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">,</span>
+    <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Subset the electrodes to a maximum number of electrodes.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        batch (dict): dictionary from SingleSessionDataset with keys:</span>
-<span class="sd">            &#39;ieeg&#39;: {&#39;data&#39;: torch.Tensor[batch_size, n_channels, n_samples], &#39;sampling_rate&#39;: int}</span>
-<span class="sd">            &#39;channels&#39;: {&#39;id&#39;: np.array}</span>
-<span class="sd">            &#39;metadata&#39;: dict</span>
-<span class="sd">        max_n_electrodes (int): the maximum number of electrodes to subset to</span>
-<span class="sd">        inplace (bool): if True, modify the batch dictionary in place</span>
+<span class="sd">        data (torch.Tensor): iEEG data tensor of shape (n_samples, n_electrodes)</span>
+<span class="sd">        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict</span>
+<span class="sd">        max_n_electrodes (int): Maximum number of electrodes to keep.</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        batch: dictionary with subsetted data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-        <span class="n">batch</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
 
-    <span class="n">electrode_data</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>  <span class="c1"># shape: (n_electrodes, n_samples)</span>
-    <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_n_electrodes</span><span class="p">:</span>  <span class="c1"># Else no-op</span>
+        <span class="n">selected_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">),</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">selected_indices</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">selected_indices</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">electrode_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_n_electrodes</span><span class="p">:</span>  <span class="c1"># Else no-op</span>
-        <span class="n">selected_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">electrode_labels</span><span class="p">),</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">electrode_data</span> <span class="o">=</span> <span class="n">electrode_data</span><span class="p">[:,</span> <span class="n">selected_indices</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">electrode_labels</span><span class="p">[</span><span class="n">selected_indices</span><span class="p">]</span>
-
-    <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;ieeg&quot;</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">electrode_data</span>
-    <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">electrode_labels</span>
-
-    <span class="k">return</span> <span class="n">batch</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
