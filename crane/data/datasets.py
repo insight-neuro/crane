@@ -14,6 +14,10 @@ from crane.data.structures import CraneBatch, CraneData
 class SingleSessionDataset(Dataset):
     """
     Dataset for a single session of iEEG data. Reads data converted to `ieeg-data` format.
+    
+    .. deprecated:: 
+       `SingleSessionDataset` is deprecated, use `CraneDataset` instead. It will be removed in a future release.
+
 
     Args:
         session_id (str): A string in the format "brainset/subject/session[from:to]". If [from:to] is not provided, the entire session will be used.
@@ -88,6 +92,9 @@ class MultiSessionDataset(ConcatDataset[SingleSessionDataset]):
     Dataset that concatenates multiple SingleSessionDatasets, with support for glob pattern expansion.
     Assumes all sessions have the same context length, sampling rate, and channel layout.
 
+    .. deprecated:: 
+       `MultiSessionDataset` is deprecated, use `torch_brain.datasets.NestedDataset` instead. It will be removed in a future release.
+    
     Args:
         session_strings (list): List of session strings, potentially containing glob patterns (*, ?, [seq], [!seq])
         context_length (float): Context length in seconds

@@ -72,6 +72,8 @@ class CraneBatch:
     """
     Batch of iEEG data for PyTorch models. Data tensor shape:
     (n_samples, batch_size, n_channels), can be accessed as `batch.data`.
+    
+    .. deprecated::
     """
 
     brainset: str

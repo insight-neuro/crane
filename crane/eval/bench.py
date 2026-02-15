@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import replace
 from functools import cached_property
 from types import MappingProxyType
-from typing import Literal, ClassVar
+from typing import ClassVar, Literal
 
 import torch.nn.functional as F
 
