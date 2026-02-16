@@ -27,6 +27,15 @@ class Selector(ABC):
     def __or__(self, other: Selector) -> Selector:
         return _OrSelector(self, other)
 
+    def __invert__(self) -> Selector:
+        return _NotSelector(self)
+
+    def __xor__(self, other: Selector) -> Selector:
+        return (self & ~other) | (~self & other)
+
+    def __sub__(self, other: Selector) -> Selector:
+        return self & ~other
+
 
 class SelectAll(Selector):
     def match(self, stem: str) -> bool:
@@ -54,6 +63,14 @@ class _OrSelector(Selector):
 
     def match(self, stem: str) -> bool:
         return self.left.match(stem) or self.right.match(stem)
+
+
+@dataclass(frozen=True)
+class _NotSelector(Selector):
+    selector: Selector
+
+    def match(self, stem: str) -> bool:
+        return not self.selector.match(stem)
 
 
 class Subjects(Selector):

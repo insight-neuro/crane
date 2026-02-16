@@ -10,7 +10,7 @@ def collate_crane_batches(batch_list: list[CraneBatch]) -> CraneBatch:
     """
     Collate a list of CraneBatch objects into a single CraneBatch.
     Assumes all batches belong to the same brainset/subject/session.
-    
+
     ..deprecated::
          `collate_crane_batches` is deprecated, use `torch_brain.datasets.collate` instead. It will be removed in a future release.
 
@@ -38,7 +38,7 @@ class SessionBatchSampler(Sampler):
     """
     Batch sampler that ensures each batch only contains samples from a single session.
     This is critical when different sessions have different numbers of channels or sampling rates.
-    
+
     .. deprecated::
          `SessionBatchSampler` is deprecated, use `torch_brain.datasets.Sampler` instead. It will be removed in a future release.
 
