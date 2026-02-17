@@ -701,7 +701,10 @@
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span>
-<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset for loading and transforming data from CRANE recordings.</span>
 
 <span class="sd">    Args:</span>
@@ -729,9 +732,7 @@
         <span class="k">if</span> <span class="n">select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">select</span><span class="p">,</span> <span class="n">Selector</span><span class="p">):</span>
                 <span class="n">select</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">select</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">select</span><span class="p">:</span>
-                    <span class="n">select</span> <span class="o">=</span> <span class="n">SelectNone</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">select</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">select</span><span class="p">):</span>
                     <span class="n">select</span> <span class="o">=</span> <span class="n">Subjects</span><span class="p">(</span><span class="o">*</span><span class="n">select</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">select</span><span class="p">):</span>
                     <span class="n">select</span> <span class="o">=</span> <span class="n">SubjectSessions</span><span class="p">(</span><span class="o">*</span><span class="n">select</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
@@ -739,6 +740,11 @@
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;select must be Selector, list[int], or list[(sub, ses)]&quot;</span><span class="p">)</span>
 
             <span class="n">subject_sessions</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">subject_sessions</span> <span class="k">if</span> <span class="n">select</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subject_sessions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No recordings found matching the selection criteria. Must be of the form &#39;sub-&lt;id&gt;_ses-&lt;id&gt;*.h5&#39; with valid selection criteria.&quot;</span>
+            <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">dataset_dir</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">,</span>
