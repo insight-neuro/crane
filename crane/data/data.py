@@ -4,7 +4,7 @@ from pathlib import Path
 from temporaldata import Data
 from torch_brain.dataset import Dataset
 
-from crane.data.selectors import SelectNone, Selector, Subjects, SubjectSessions
+from crane.data.selectors import Selector, Subjects, SubjectSessions
 
 
 class CraneDataset(Dataset):
@@ -35,9 +35,7 @@ class CraneDataset(Dataset):
         if select is not None:
             if not isinstance(select, Selector):
                 select = list(select)
-                if not select:
-                    select = SelectNone()
-                elif all(isinstance(x, str | int) for x in select):
+                if all(isinstance(x, str | int) for x in select):
                     select = Subjects(*select)  # type: ignore
                 elif all(isinstance(x, tuple) and len(x) == 2 for x in select):
                     select = SubjectSessions(*select)  # type: ignore
@@ -45,6 +43,11 @@ class CraneDataset(Dataset):
                     raise ValueError("select must be Selector, list[int], or list[(sub, ses)]")
 
             subject_sessions = [s for s in subject_sessions if select.match(s)]
+
+        if not subject_sessions:
+            raise ValueError(
+                "No recordings found matching the selection criteria. Must be of the form 'sub-<id>_ses-<id>*.h5' with valid selection criteria."
+            )
 
         super().__init__(
             dataset_dir=dataset_dir,
