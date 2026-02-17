@@ -35,7 +35,7 @@ class CraneDataset(Dataset):
         if select is not None:
             if not isinstance(select, Selector):
                 select = list(select)
-                if all(isinstance(x, str | int) for x in select):
+                if all(isinstance(x, (str, int)) for x in select):
                     select = Subjects(*select)  # type: ignore
                 elif all(isinstance(x, tuple) and len(x) == 2 for x in select):
                     select = SubjectSessions(*select)  # type: ignore

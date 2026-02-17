@@ -1,14 +1,13 @@
 from crane.data.selectors import (
-    _parse_stem,
-    _get_token,
+    Entity,
     SelectAll,
     SelectNone,
     Subjects,
     SubjectSessions,
     Suffix,
-    Entity,
+    _get_token,
+    _parse_stem,
 )
-
 
 STEM = "sub-001_ses-01_task-rest_run-02_bold"
 
@@ -16,6 +15,7 @@ STEM = "sub-001_ses-01_task-rest_run-02_bold"
 # -------------------------
 # parsing helpers
 # -------------------------
+
 
 def test_parse_stem():
     parts = _parse_stem(STEM)
@@ -40,6 +40,7 @@ def test_get_token():
 # trivial selectors
 # -------------------------
 
+
 def test_select_all_none():
     assert SelectAll().match(STEM)
     assert not SelectNone().match(STEM)
@@ -48,6 +49,7 @@ def test_select_all_none():
 # -------------------------
 # subjects
 # -------------------------
+
 
 def test_subjects_match():
     sel = Subjects(1)
@@ -75,6 +77,7 @@ def test_subject_sessions_match():
 # suffix
 # -------------------------
 
+
 def test_suffix():
     assert Suffix("task-rest").match(STEM)
     assert not Suffix("task-motor").match(STEM)
@@ -83,6 +86,7 @@ def test_suffix():
 # -------------------------
 # entity
 # -------------------------
+
 
 def test_entity_key_only():
     assert Entity("task").match(STEM)
@@ -99,6 +103,7 @@ def test_entity_key_value():
 # -------------------------
 # logical operators
 # -------------------------
+
 
 def test_and_or_not():
     sel = Subjects(1) & Entity("task", "rest")
