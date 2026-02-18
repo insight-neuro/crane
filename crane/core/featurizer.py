@@ -33,10 +33,10 @@ class BrainFeatureExtractor(SequenceFeatureExtractor, ABC):
     Override the `forward` method to implement custom feature extraction logic.
     """
 
-    def __call__(self, data: Data, **kwargs) -> BrainFeature:
-        return self.forward(data, **kwargs)
+    def __call__(self, batch: Data) -> BrainFeature:
+        return self.forward(batch)
 
     @abstractmethod
-    def forward(self, data: Data, **kwargs) -> BrainFeature:
+    def forward(self, batch: Data) -> BrainFeature:
         """Forward method to be implemented by subclasses."""
         ...
