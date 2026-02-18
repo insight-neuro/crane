@@ -38,15 +38,8 @@ def subset_electrodes(
         per_recording (bool): If True, subset electrodes independently for each recording.
 
     """
-    batch_size, n_electrodes, n_samples = data.shape
-    
-    if len(data) > max_n_electrodes:  # Else no-op
-        if per_recording:
-            selected_indices = np.random.choice(len(channels), (len(data), max_n_electrodes), replace=False)
-        else:
-            selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
-            
-            
+        
+    if len(data) > max_n_electrodes:  # Else no-op            
         selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
         if data.ndim == 2:  # (n_electrodes, n_samples)
             data = data[selected_indices, :]
