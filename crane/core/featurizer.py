@@ -15,11 +15,12 @@ class BrainFeature(BatchFeature):
 
     def __init__(
         self,
-        data: dict[str, Any],
-        *,
+        data: dict[str, Any] | None = None,
+        /,
         tensor_type: None | str | TensorType = None,
         **kwargs,
     ):
+        data = {} if data is None else data
         data.update(kwargs)
         super().__init__(data=data, tensor_type=tensor_type)
 

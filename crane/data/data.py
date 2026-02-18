@@ -66,5 +66,5 @@ class CraneDataset(Dataset):
     def __getitem__(self, index: DatasetIndex) -> BrainFeature:  # type: ignore[override]
         data = super().__getitem__(index)
         if self.featurizer is not None:
-            data = self.featurizer(data)
+            return self.featurizer(data)
         return BrainFeature(data.data.data)  # type: ignore[attr-defined]
