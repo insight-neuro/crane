@@ -26,6 +26,7 @@ def subset_electrodes(
     data: torch.Tensor,
     channels: np.ndarray | ChannelDict,
     max_n_electrodes: int,
+    per_recording: bool = False,
 ) -> tuple[torch.Tensor, np.ndarray | ChannelDict]:
     """
     Subset the electrodes to a maximum number of electrodes. Consistent across a batch.
@@ -34,16 +35,23 @@ def subset_electrodes(
         data (torch.Tensor): iEEG data tensor of shape 2 or 3 ([n_batch_size], n_electrodes, n_samples)
         channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict
         max_n_electrodes (int): Maximum number of electrodes to keep.
+        per_recording (bool): If True, subset electrodes independently for each recording.
 
     """
-
+    batch_size, n_electrodes, n_samples = data.shape
+    
     if len(data) > max_n_electrodes:  # Else no-op
+        if per_recording:
+            selected_indices = np.random.choice(len(channels), (len(data), max_n_electrodes), replace=False)
+        else:
+            selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
+            
+            
         selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
-        if data.shape == 2:  # (n_electrodes, n_samples)
+        if data.ndim == 2:  # (n_electrodes, n_samples)
             data = data[selected_indices, :]
         else:  # (n_batch, n_electrodes, n_samples)
             data = data[:, selected_indices, :]
-        data = data[:, selected_indices]
         channels = channels[selected_indices]
 
     return data, channels
