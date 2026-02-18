@@ -1743,7 +1743,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
     <div class="doc doc-contents ">
 
-        <p>Subset the electrodes to a maximum number of electrodes.</p>
+        <p>Subset the electrodes to a maximum number of electrodes. Consistent across a batch.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1766,7 +1766,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
             </td>
             <td>
               <div class="doc-md-description">
-                <p>iEEG data tensor of shape (n_samples, n_electrodes)</p>
+                <p>iEEG data tensor of shape 2 or 3 ([n_batch_size], n_electrodes, n_samples)</p>
               </div>
             </td>
             <td>
@@ -1831,16 +1831,20 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
-<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">channels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">,</span>
     <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">ChannelDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Subset the electrodes to a maximum number of electrodes.</span>
+<span class="sd">    Subset the electrodes to a maximum number of electrodes. Consistent across a batch.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        data (torch.Tensor): iEEG data tensor of shape (n_samples, n_electrodes)</span>
+<span class="sd">        data (torch.Tensor): iEEG data tensor of shape 2 or 3 ([n_batch_size], n_electrodes, n_samples)</span>
 <span class="sd">        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict</span>
 <span class="sd">        max_n_electrodes (int): Maximum number of electrodes to keep.</span>
 
@@ -1848,7 +1852,11 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_n_electrodes</span><span class="p">:</span>  <span class="c1"># Else no-op</span>
         <span class="n">selected_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">),</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">selected_indices</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># (n_electrodes, n_samples)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">selected_indices</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># (n_batch, n_electrodes, n_samples)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">selected_indices</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">selected_indices</span><span class="p">]</span>
         <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">selected_indices</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
