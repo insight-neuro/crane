@@ -1,50 +1,35 @@
-from typing import overload
-
 import numpy as np
-import torch
+from torch import Tensor
 
 from ..data.structures import ChannelDict
 
 
-@overload
-def subset_electrodes(
-    data: torch.Tensor,
-    channels: np.ndarray,
+def subset_electrodes[T: (np.ndarray, ChannelDict)](
+    data: Tensor,
+    channels: T,
     max_n_electrodes: int,
-) -> tuple[torch.Tensor, np.ndarray]: ...
-
-
-@overload
-def subset_electrodes(
-    data: torch.Tensor,
-    channels: ChannelDict,
-    max_n_electrodes: int,
-) -> tuple[torch.Tensor, ChannelDict]: ...
-
-
-def subset_electrodes(
-    data: torch.Tensor,
-    channels: np.ndarray | ChannelDict,
-    max_n_electrodes: int,
-    per_recording: bool = False,
-) -> tuple[torch.Tensor, np.ndarray | ChannelDict]:
+    batch_first: bool = True,
+) -> tuple[Tensor, T]:
     """
-    Subset the electrodes to a maximum number of electrodes. Consistent across a batch.
+    Subset the electrodes to a random selection of electrodes. Consistent across a batch.
+    If the number of electrodes is already less than or equal to the maximum, no subsetting is performed.
 
     Args:
-        data (torch.Tensor): iEEG data tensor of shape 2 or 3 ([n_batch_size], n_electrodes, n_samples)
+        data (torch.Tensor): ([n_batch_size], n_electrodes, n_samples)
         channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict
         max_n_electrodes (int): Maximum number of electrodes to keep.
-        per_recording (bool): If True, subset electrodes independently for each recording.
+        batch_first (bool): Whether the batch dimension is the first dimension in the data tensor.
 
+    Returns:
+        tuple[torch.Tensor, np.ndarray | ChannelDict]: Subsetted data tensor and corresponding channel IDs.
     """
-        
-    if len(data) > max_n_electrodes:  # Else no-op            
+
+    if len(data) > max_n_electrodes:  # Else no-op
         selected_indices = np.random.choice(len(channels), max_n_electrodes, replace=False)
-        if data.ndim == 2:  # (n_electrodes, n_samples)
-            data = data[selected_indices, :]
-        else:  # (n_batch, n_electrodes, n_samples)
-            data = data[:, selected_indices, :]
+        if batch_first:
+            data = data[:, selected_indices, ...]
+        else:
+            data = data[selected_indices, ...]
         channels = channels[selected_indices]
 
     return data, channels

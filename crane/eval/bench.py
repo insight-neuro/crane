@@ -195,7 +195,7 @@ class BrainBench(ABC):
             },
         }
 
-    def _collect_tasks(self):
+    def _collect_tasks(self) -> dict[str, set[Task]]:
         """Collect tasks from decorated methods."""
         task_groups: dict[str, set[Task]] = defaultdict(set)
 

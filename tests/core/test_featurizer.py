@@ -1,13 +1,12 @@
 import pytest
-from transformers.utils.generic import TensorType
-
-from crane.core.featurizer import BrainFeature, BrainFeatureExtractor
 from temporaldata import Data
 
+from crane.core.featurizer import BrainFeature, BrainFeatureExtractor
 
 # ---------------------------
 # BrainFeature tests
 # ---------------------------
+
 
 def test_brain_feature_empty_init():
     bf = BrainFeature()
@@ -39,10 +38,11 @@ def test_brain_feature_behaves_like_dict():
 # BrainFeatureExtractor tests
 # ---------------------------
 
+
 class DummyExtractor(BrainFeatureExtractor):
     def __init__(self):
         super().__init__(feature_size=1, sampling_rate=100, padding_value=0)
-        
+
     def forward(self, batch):
         return BrainFeature({"processed": batch})
 
@@ -57,5 +57,5 @@ def test_brain_feature_extractor_call_delegates_to_forward():
 
 
 def test_brain_feature_extractor_is_abstract():
-    with pytest.raises(TypeError):
-        BrainFeatureExtractor()  # type: ignore - should raise because forward is not implemented
+    with pytest.raises(TypeError):  # should raise because forward is not implemented.
+        BrainFeatureExtractor()  # type: ignore
