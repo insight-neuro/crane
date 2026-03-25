@@ -17,7 +17,7 @@ class BrainFeature(BatchFeature):
         self,
         data: dict[str, Any] | Data | None = None,
         /,
-        tensor_type: None | str | TensorType = None,
+        tensor_type: None | str | TensorType = "pt",
         **kwargs,
     ):
         if isinstance(data, Data):
