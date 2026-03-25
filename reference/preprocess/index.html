@@ -1724,15 +1724,15 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
 
 <h2 id="crane.preprocess.subset_electrodes" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
 
     <div class="doc doc-contents ">
 
-        <p>Subset the electrodes to a random selection of electrodes. Consistent across a batch.
-If the number of electrodes is already less than or equal to the maximum, no subsetting is performed.</p>
+        <p>Subset the electrodes to a random selection of electrodes. Consistent across a batch.</p>
+<p>One of <code>max_n_electrodes</code> or <code>subset</code> must be provided.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1771,23 +1771,7 @@ If the number of electrodes is already less than or equal to the maximum, no sub
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Array of channel IDs or ChannelDict</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>max_n_electrodes</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Maximum number of electrodes to keep.</p>
+                <p>Array of channel IDs or ChannelDict.</p>
               </div>
             </td>
             <td>
@@ -1812,10 +1796,26 @@ If the number of electrodes is already less than or equal to the maximum, no sub
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>max_n_electrodes</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of randomly selected electrodes to subset to.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>subset</code>
             </td>
             <td>
-                  <code><span title="typing.Sequence">Sequence</span>[<span title="int">int</span> | <span title="str">str</span>] | None</code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="int">int</span> | <span title="str">str</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1855,10 +1855,7 @@ If the number of electrodes is already less than or equal to the maximum, no sub
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/electrode_subset.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
@@ -1899,49 +1896,78 @@ If the number of electrodes is already less than or equal to the maximum, no sub
 <span class="normal">48</span>
 <span class="normal">49</span>
 <span class="normal">50</span>
-<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">)](</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">)](</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">channels</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>
-    <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">subset</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">subset</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Subset the electrodes to a random selection of electrodes. Consistent across a batch.</span>
-<span class="sd">    If the number of electrodes is already less than or equal to the maximum, no subsetting is performed.</span>
+
+<span class="sd">    One of `max_n_electrodes` or `subset` must be provided.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (torch.Tensor): ([n_batch_size], n_electrodes, n_samples)</span>
-<span class="sd">        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict</span>
-<span class="sd">        max_n_electrodes (int): Maximum number of electrodes to keep.</span>
+<span class="sd">        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict.</span>
 <span class="sd">        batch_first (bool): Whether the batch dimension is the first dimension in the data tensor.</span>
+<span class="sd">        max_n_electrodes (int): Maximum number of randomly selected electrodes to subset to.</span>
 <span class="sd">        subset (Sequence[int | str] | None): Optional list of electrode indices or IDs to subset to. If None, a random subset is chosen.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple[torch.Tensor, np.ndarray | ChannelDict]: Subsetted data tensor and corresponding channel IDs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Determine indices to subset</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">subset</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_n_electrodes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">),</span> <span class="n">max_n_electrodes</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="p">(</span><span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provide exactly one of max_n_electrodes or subset&quot;</span><span class="p">)</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">device</span>
+
+    <span class="c1"># If no subset provided, randomly select electrodes up to max_n_electrodes</span>
+    <span class="k">if</span> <span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="n">max_n_electrodes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)[:</span><span class="n">max_n_electrodes</span><span class="p">]</span>
+
+    <span class="c1"># If string IDs provided, map to indices using channels.id</span>
     <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">ChannelDict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;channels must be a ChannelDict if subset contains channel IDs&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;channels must be ChannelDict when subset contains IDs&quot;</span><span class="p">)</span>
 
-        <span class="n">id_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">subset</span><span class="p">)</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">channels</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="k">if</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">id_set</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">subset</span><span class="p">))</span>
+        <span class="n">id_to_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">cid</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">channels</span><span class="o">.</span><span class="n">id</span><span class="p">)}</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">id_to_idx</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">subset</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">id_to_idx</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="c1"># Subset data and channels</span>
-    <span class="k">if</span> <span class="n">batch_first</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">indices</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="c1"># If integer indices provided, use directly</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">indices</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-    <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Apply subset to data and channels</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">batch_first</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">indices</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()]</span>
 
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
 </code></pre></div></td></tr></table></div>
