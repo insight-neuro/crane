@@ -25,7 +25,7 @@ class ChannelDict(ArrayDict):  # shape: (n_channels,)
     """Brain area"""
 
     def __getitem__(self, key):  # Splicing support
-        return ChannelDict(**{field: getattr(self, field)[key] for field in self.__annotations__})
+        return ChannelDict(**{field: getattr(self, field)[key] for field in self.__dict__})
 
 
 class CraneData(Data):
@@ -44,7 +44,8 @@ class CraneData(Data):
 
     def to_crane_batch(self, device: torch.device | str | None = None) -> "CraneBatch":
         """
-        Convert CraneData to CraneBatch for use in PyTorch.
+        Convert CraneD
+        ..deprecated::ata to CraneBatch for use in PyTorch.
 
         Args:
             device (torch.device | str | None): Device to move the tensor to. If None, no movement is done.
