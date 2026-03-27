@@ -1724,7 +1724,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
 
 <h2 id="crane.preprocess.subset_electrodes" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1776,22 +1776,6 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>batch_first</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether the batch dimension is the first dimension in the data tensor.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1916,7 +1900,6 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
     <span class="n">data</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">channels</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">batch_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">subset</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
@@ -1928,7 +1911,6 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="sd">    Args:</span>
 <span class="sd">        data (torch.Tensor): ([n_batch_size], n_electrodes, n_samples)</span>
 <span class="sd">        channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict.</span>
-<span class="sd">        batch_first (bool): Whether the batch dimension is the first dimension in the data tensor.</span>
 <span class="sd">        max_n_electrodes (int): Maximum number of randomly selected electrodes to subset to.</span>
 <span class="sd">        subset (Sequence[int | str] | None): Optional list of electrode indices or IDs to subset to. If None, a random subset is chosen.</span>
 
@@ -1965,9 +1947,11 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
         <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 
     <span class="c1"># Apply subset to data and channels</span>
-    <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">batch_first</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">0</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
-    <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">indices</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()]</span>
+
+    <span class="n">idx_np</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">idx_np</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">channels</span>
 </code></pre></div></td></tr></table></div>
