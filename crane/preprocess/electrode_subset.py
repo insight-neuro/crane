@@ -11,7 +11,6 @@ def subset_electrodes[T: (np.ndarray, ChannelDict)](
     data: Tensor,
     channels: T,
     *,
-    batch_first: bool = True,
     max_n_electrodes: int | None = None,
     subset: Sequence[int] | Sequence[str] | None = None,
 ) -> tuple[Tensor, T]:
@@ -23,7 +22,6 @@ def subset_electrodes[T: (np.ndarray, ChannelDict)](
     Args:
         data (torch.Tensor): ([n_batch_size], n_electrodes, n_samples)
         channel_ids (np.ndarray | ChannelDict): Array of channel IDs or ChannelDict.
-        batch_first (bool): Whether the batch dimension is the first dimension in the data tensor.
         max_n_electrodes (int): Maximum number of randomly selected electrodes to subset to.
         subset (Sequence[int | str] | None): Optional list of electrode indices or IDs to subset to. If None, a random subset is chosen.
 
@@ -60,8 +58,10 @@ def subset_electrodes[T: (np.ndarray, ChannelDict)](
         indices = torch.as_tensor(subset, dtype=torch.long, device=device)
 
     # Apply subset to data and channels
-    dim = 1 if batch_first else 0
+    dim = 1 if data.ndim == 3 else 0
     data = torch.index_select(data, dim, indices)
-    channels = channels[indices.cpu().numpy()]
-
+    
+    idx_np = indices.detach().cpu().numpy()
+    channels = channels[idx_np]
+    
     return data, channels
