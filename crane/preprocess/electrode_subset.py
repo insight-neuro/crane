@@ -31,7 +31,7 @@ def subset_electrodes[T: (np.ndarray, ChannelDict)](
         tuple[torch.Tensor, np.ndarray | ChannelDict]: Subsetted data tensor and corresponding channel IDs.
     """
 
-    if (subset is None) ^ (max_n_electrodes is None):
+    if (subset is None) == (max_n_electrodes is None):
         raise ValueError("Provide exactly one of max_n_electrodes or subset")
 
     device = data.device
