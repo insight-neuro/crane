@@ -1936,7 +1936,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="sd">        tuple[torch.Tensor, np.ndarray | ChannelDict]: Subsetted data tensor and corresponding channel IDs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provide exactly one of max_n_electrodes or subset&quot;</span><span class="p">)</span>
 
     <span class="n">device</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">device</span>
