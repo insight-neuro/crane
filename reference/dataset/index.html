@@ -743,7 +743,8 @@
 <span class="normal">81</span>
 <span class="normal">82</span>
 <span class="normal">83</span>
-<span class="normal">84</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="n">BrainFeature</span><span class="p">](</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="normal">84</span>
+<span class="normal">85</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="n">BrainFeature</span><span class="p">](</span><span class="n">Dataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset for loading and transforming Crane-formatted neural recordings.</span>
 
 <span class="sd">    Args:</span>
@@ -801,20 +802,21 @@
         <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
 
         <span class="n">signals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># type: ignore[attr-defined]</span>
-        <span class="n">coords</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="n">feat</span> <span class="o">=</span> <span class="n">CraneFeature</span><span class="p">(</span>
             <span class="n">brainset</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">brainset</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">subject</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">session</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">signals</span><span class="o">=</span><span class="n">signals</span><span class="p">,</span>
-            <span class="n">channel_labels</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">channel_labels</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">channel_coordinates</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
             <span class="n">sampling_rate</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">feat</span>
+
+        <span class="k">return</span> <span class="n">feat</span>  <span class="c1"># type: ignore[return-value]</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
