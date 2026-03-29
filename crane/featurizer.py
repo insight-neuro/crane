@@ -74,7 +74,7 @@ class CraneFeature(BrainFeature):
         return self.signals.ndim == 3
 
 
-class BrainFeatureExtractor(SequenceFeatureExtractor, ABC):
+class BrainFeatureExtractor[InT: BrainFeature, OutT: BrainFeature](SequenceFeatureExtractor, ABC):
     """
     Base feature extractor for brain models.
     Inherits from SequenceFeatureExtractor for HuggingFace Hub compatibility
@@ -83,10 +83,10 @@ class BrainFeatureExtractor(SequenceFeatureExtractor, ABC):
     Override the `forward` method to implement custom feature extraction logic.
     """
 
-    def __call__(self, batch: BrainFeature) -> BrainFeature:
+    def __call__(self, batch: InT) -> OutT:
         return self.forward(batch)
 
     @abstractmethod
-    def forward(self, batch: BrainFeature) -> BrainFeature:
+    def forward(self, batch: InT) -> OutT:
         """Forward method to be implemented by subclasses."""
         ...
