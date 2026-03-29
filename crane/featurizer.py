@@ -67,10 +67,12 @@ class CraneFeature(BrainFeature):
 
     @property
     def device(self) -> torch.device:
+        """Returns the device of the signals tensor."""
         return self.signals.device
 
     @property
     def batched(self) -> bool:
+        """Returns True if the signals tensor has a batch dimension (i.e., is 3D)."""
         return self.signals.ndim == 3
 
 

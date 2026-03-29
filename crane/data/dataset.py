@@ -10,7 +10,7 @@ from crane.data.selectors import Selector, Subjects, SubjectSessions
 from crane.featurizer import BrainFeature, BrainFeatureExtractor, CraneFeature
 
 
-class CraneDataset(Dataset):
+class CraneDataset[T: BrainFeature](Dataset):
     """Dataset for loading and transforming Crane-formatted neural recordings.
 
     Args:
@@ -30,7 +30,7 @@ class CraneDataset(Dataset):
         dataset_dir: str | Path,
         select: Selector | Iterable[int | tuple[int, int]] | None = None,
         transform: Callable[[Data], Data] | None = None,
-        featurizer: BrainFeatureExtractor | None = None,
+        featurizer: BrainFeatureExtractor[CraneFeature, T] | None = None,
         keep_files_open: bool = True,
     ):
         dataset_dir = Path(dataset_dir)
@@ -64,7 +64,7 @@ class CraneDataset(Dataset):
         )
 
     @override
-    def __getitem__(self, index: DatasetIndex) -> BrainFeature:  # type: ignore[override]
+    def __getitem__(self, index: DatasetIndex) -> T:  # type: ignore[override]
         data = super().__getitem__(index)
 
         signals = torch.from_numpy(data.signals.data.T).float()  # type: ignore[attr-defined]
