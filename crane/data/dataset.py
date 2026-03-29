@@ -2,11 +2,12 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import override
 
+import torch
 from temporaldata import Data
 from torch_brain.dataset import Dataset, DatasetIndex
 
-from crane.core.featurizer import BrainFeature, BrainFeatureExtractor
 from crane.data.selectors import Selector, Subjects, SubjectSessions
+from crane.featurizer import BrainFeature, BrainFeatureExtractor, CraneFeature
 
 
 class CraneDataset(Dataset):
@@ -65,6 +66,19 @@ class CraneDataset(Dataset):
     @override
     def __getitem__(self, index: DatasetIndex) -> BrainFeature:  # type: ignore[override]
         data = super().__getitem__(index)
+
+        signals = torch.from_numpy(data.signals.data.T).float()  # type: ignore[attr-defined]
+        coords = torch.from_numpy(data.channel_coordinates).float()  # type: ignore[attr-defined]
+        feat = CraneFeature(
+            brainset=data.brainset.id,  # type: ignore[attr-defined]
+            subject=data.subject.id,  # type: ignore[attr-defined]
+            session=data.session.id,  # type: ignore[attr-defined]
+            signals=signals,
+            channel_labels=data.channel_labels,  # type: ignore[attr-defined]
+            channel_coordinates=coords,
+            sampling_rate=data.signals.sampling_rate,  # type: ignore[attr-defined]
+        )
+
         if self.featurizer is not None:
-            return self.featurizer(data)
-        return BrainFeature(data)
+            feat = self.featurizer(feat)
+        return feat

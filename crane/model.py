@@ -1,11 +1,49 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from dataclasses import dataclass
 
 import torch
-from transformers import PreTrainedModel
+from transformers import PretrainedConfig, PreTrainedModel
+from transformers.utils.generic import ModelOutput
 
-from .config import BrainConfig
-from .output import BrainHeadOutput, BrainOutput
+
+class BrainConfig(PretrainedConfig):
+    model_type = "brain_model"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+@dataclass
+class BrainOutput(ModelOutput):
+    """Model output for neural data models.
+
+    Attributes:
+        last_hidden_state (torch.Tensor): The last hidden state tensor (leaned features).
+    """
+
+    last_hidden_state: torch.Tensor
+
+    def to_dict(self) -> dict:
+        return {k: v for k, v in self.__dict__.items()}
+
+
+@dataclass
+class BrainHeadOutput(BrainOutput):
+    """Model output for brain models with task-specific heads.
+
+    Attributes:
+        last_hidden_state (torch.Tensor): The last hidden state tensor (leaned features).
+        outputs (torch.Tensor): The output tensor from the task-specific head.
+    """
+
+    outputs: torch.Tensor
+
+    @staticmethod
+    def from_features(features: BrainOutput, outputs: torch.Tensor) -> "BrainHeadOutput":
+        return BrainHeadOutput(**features.to_dict(), outputs=outputs)
+
+    def to_dict(self) -> dict:
+        return super().to_dict()
 
 
 class BrainModel(PreTrainedModel, ABC):
@@ -14,9 +52,9 @@ class BrainModel(PreTrainedModel, ABC):
     Inherits from PreTrainedModel for HuggingFace Hub compatibility.
     """
 
-    config_class: ClassVar[type[BrainConfig]] = BrainConfig
-    base_model_prefix: ClassVar[str] = "brain_model"
-    supports_gradient_checkpointing: ClassVar[bool] = True
+    config_class = BrainConfig
+    base_model_prefix = "brain_model"
+    supports_gradient_checkpointing = True
 
     @abstractmethod
     def forward(self, batch: dict, *args, **kwargs) -> BrainOutput:

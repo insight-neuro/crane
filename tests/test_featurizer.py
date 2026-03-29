@@ -1,7 +1,6 @@
 import pytest
-from temporaldata import Data
 
-from crane.core.featurizer import BrainFeature, BrainFeatureExtractor
+from crane.featurizer import BrainFeature, BrainFeatureExtractor
 
 # ---------------------------
 # BrainFeature tests
@@ -49,7 +48,7 @@ class DummyExtractor(BrainFeatureExtractor):
 
 def test_brain_feature_extractor_call_delegates_to_forward():
     extractor = DummyExtractor()
-    batch = Data(some="data")
+    batch = BrainFeature(some="data")
     result = extractor(batch)
 
     assert isinstance(result, BrainFeature)

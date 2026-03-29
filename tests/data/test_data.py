@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from crane.data.data import CraneDataset
+from crane.data.dataset import CraneDataset
 from crane.data.selectors import Subjects, SubjectSessions
 
 

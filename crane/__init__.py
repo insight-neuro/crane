@@ -1,3 +1,4 @@
-from .core import BrainConfig, BrainFeatureExtractor, BrainHeadOutput, BrainModel, BrainOutput
+from .featurizer import BrainFeature, BrainFeatureExtractor, CraneFeature
+from .model import BrainConfig, BrainModel, BrainOutput
 
-__all__ = ["BrainModel", "BrainFeatureExtractor", "BrainOutput", "BrainConfig", "BrainHeadOutput"]
+__all__ = ["BrainModel", "BrainFeatureExtractor", "BrainOutput", "BrainConfig", "BrainFeature", "CraneFeature"]
