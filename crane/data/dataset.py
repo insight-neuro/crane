@@ -68,17 +68,18 @@ class CraneDataset[T: BrainFeature](Dataset):
         data = super().__getitem__(index)
 
         signals = torch.from_numpy(data.signals.data.T).float()  # type: ignore[attr-defined]
-        coords = torch.from_numpy(data.channel_coordinates).float()  # type: ignore[attr-defined]
+        coords = torch.from_numpy(data.channels.coordinates).float()  # type: ignore[attr-defined]
         feat = CraneFeature(
             brainset=data.brainset.id,  # type: ignore[attr-defined]
             subject=data.subject.id,  # type: ignore[attr-defined]
             session=data.session.id,  # type: ignore[attr-defined]
             signals=signals,
-            channel_labels=data.channel_labels,  # type: ignore[attr-defined]
+            channel_labels=data.channels.labels,  # type: ignore[attr-defined]
             channel_coordinates=coords,
             sampling_rate=data.signals.sampling_rate,  # type: ignore[attr-defined]
         )
 
         if self.featurizer is not None:
             feat = self.featurizer(feat)
-        return feat
+
+        return feat  # type: ignore[return-value]
