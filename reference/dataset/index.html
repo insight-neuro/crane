@@ -633,7 +633,7 @@
                 <code>featurizer</code>
             </td>
             <td>
-                  <code><span title="crane.core.featurizer.BrainFeatureExtractor">BrainFeatureExtractor</span> | None</code>
+                  <code><span title="crane.featurizer.BrainFeatureExtractor">BrainFeatureExtractor</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -671,9 +671,8 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>crane/data/data.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">12</span>
-<span class="normal">13</span>
+                <summary>Source code in <code>crane/data/dataset.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
@@ -730,7 +729,21 @@
 <span class="normal">67</span>
 <span class="normal">68</span>
 <span class="normal">69</span>
-<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CraneDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset for loading and transforming Crane-formatted neural recordings.</span>
 
 <span class="sd">    Args:</span>
@@ -786,9 +799,22 @@
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">DatasetIndex</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BrainFeature</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">signals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">CraneFeature</span><span class="p">(</span>
+            <span class="n">brainset</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">brainset</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">subject</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">session</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">signals</span><span class="o">=</span><span class="n">signals</span><span class="p">,</span>
+            <span class="n">channel_labels</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">channel_coordinates</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
+            <span class="n">sampling_rate</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">BrainFeature</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">feat</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
