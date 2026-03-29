@@ -21,13 +21,14 @@ class BrainFeature(BatchFeature):
         data: dict[str, Any] | Data | None = None,
         /,
         tensor_type: None | str | TensorType = "pt",
+        skip_tensor_conversion: list[str] | set[str] | None = None,
         **kwargs,
     ):
         if isinstance(data, Data):
             data = data.to_dict()
         data = {} if data is None else data
         data.update(kwargs)
-        super().__init__(data=data, tensor_type=tensor_type)
+        super().__init__(data=data, tensor_type=tensor_type, skip_tensor_conversion=skip_tensor_conversion)
 
 
 class CraneFeature(BrainFeature):
@@ -50,8 +51,14 @@ class CraneFeature(BrainFeature):
     sampling_rate: int
     """Sampling rate of the signals"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, skip_tensor_conversion: list[str] | set[str] | None = None, **kwargs):
+        if skip_tensor_conversion is None:
+            skip_tensor_conversion = {"channel_labels"}
+        else:
+            skip_tensor_conversion = set(skip_tensor_conversion)
+            skip_tensor_conversion.add("channel_labels")
+        
+        super().__init__(*args, **kwargs, skip_tensor_conversion=skip_tensor_conversion)
         channel_dim = 1 if self.batched else 0
 
         if self.signals.shape[channel_dim] != self.channel_coordinates.shape[channel_dim] != len(self.channel_labels):
