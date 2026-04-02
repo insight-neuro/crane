@@ -33,14 +33,12 @@ def subset_electrodes(
     if not inplace:
         data = data.copy()
 
-    device = data.device
-
     # If no subset provided, randomly select electrodes up to max_n_electrodes
     if subset is None:
         n = len(data)
         if max_n_electrodes is None or n <= max_n_electrodes:
             return data
-        indices = torch.randperm(n, device=device)[:max_n_electrodes]
+        indices = torch.randperm(n, device=data.device)[:max_n_electrodes]
 
     # If string IDs provided, map to indices using channel_labels
     elif all(isinstance(e, str) for e in subset):
@@ -50,16 +48,15 @@ def subset_electrodes(
         indices = torch.tensor(
             [id_to_idx[e] for e in subset if e in id_to_idx],
             dtype=torch.long,
-            device=device,
+            device=data.device,
         )
 
     # If integer indices provided, use directly
     else:
-        indices = torch.as_tensor(subset, dtype=torch.long, device=device)
+        indices = torch.as_tensor(subset, dtype=torch.long, device=data.device)
 
-    dim = 1 if data.signals.ndim == 3 else 0
-    data.signals = torch.index_select(data.signals, dim, indices)
-    data.channel_coordinates = torch.index_select(data.channel_coordinates, dim, indices)
+    data.signals = torch.index_select(data.signals, data.channel_dim, indices)
+    data.channel_coordinates = torch.index_select(data.channel_coordinates, 0, indices)
     data.channel_labels = [data.channel_labels[i] for i in indices.tolist()]
 
     return data

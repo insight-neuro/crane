@@ -74,7 +74,7 @@ class CraneDataset[T: BrainFeature](Dataset):
             subject=data.subject.id,  # type: ignore[attr-defined]
             session=data.session.id,  # type: ignore[attr-defined]
             signals=signals,
-            channel_labels=data.channels.labels,  # type: ignore[attr-defined]
+            channel_labels=data.channels.labels.tolist(),  # type: ignore[attr-defined]
             channel_coordinates=coords,
             sampling_rate=data.signals.sampling_rate,  # type: ignore[attr-defined]
         )
