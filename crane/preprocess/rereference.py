@@ -3,6 +3,7 @@ from collections import defaultdict
 import torch
 
 from crane.featurizer import CraneFeature
+from crane.preprocess.utils import allow_inplace
 
 # TODO: This can probably be improved
 
@@ -136,15 +137,14 @@ def _rereference_electrodes(
     )
 
 
-def laplacian_rereference(
-    feature: CraneFeature, remove_non_laplacian: bool = True, inplace: bool = False
-) -> CraneFeature:
+@allow_inplace
+def laplacian_rereference(data: CraneFeature, remove_non_laplacian: bool = True) -> CraneFeature:
     """
     Apply Laplacian rereferencing to a batch of neural data
     (subtract the mean of the neighbors, as determined by the electrode labels)
 
     Args:
-        feature (CraneFeature): CraneFeature containing the neural data and channel information
+        data (CraneFeature): CraneFeature containing the neural data and channel information
         remove_non_laplacian (bool): if True, remove the non-laplacian electrodes from the data; if false, keep them without rereferencing
 
     Returns:
@@ -153,22 +153,19 @@ def laplacian_rereference(
             updated_channels (list of str or ChannelDict): list of electrode labels or ChannelDict of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)
     """
 
-    electrode_labels = feature.channel_labels
-
-    if not inplace:
-        feature = feature.copy()
+    electrode_labels = data.channel_labels
 
     # _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)
     rereferenced_data, rereferenced_labels, _ = _rereference_electrodes(
-        feature.signals, electrode_labels, remove_non_laplacian=remove_non_laplacian
+        data.signals, electrode_labels, remove_non_laplacian=remove_non_laplacian
     )
 
     # Update with rereferenced data
     label_set = set(rereferenced_labels)
     indices = [i for i, label in enumerate(electrode_labels) if label in label_set]
 
-    feature.signals = rereferenced_data
-    feature.channel_labels = rereferenced_labels
-    feature.channel_coordinates = feature.channel_coordinates[indices]
+    data.signals = rereferenced_data
+    data.channel_labels = rereferenced_labels
+    data.channel_coordinates = data.channel_coordinates[indices]
 
-    return feature
+    return data

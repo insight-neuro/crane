@@ -4,12 +4,13 @@ from typing import cast
 import torch
 
 from crane.featurizer import CraneFeature
+from crane.preprocess.utils import allow_inplace
 
 
+@allow_inplace
 def subset_electrodes(
     data: CraneFeature,
     *,
-    inplace: bool = False,
     max_n_electrodes: int | None = None,
     subset: Sequence[int] | Sequence[str] | None = None,
 ) -> CraneFeature:
@@ -30,12 +31,9 @@ def subset_electrodes(
     if (subset is None) == (max_n_electrodes is None):
         raise ValueError("Provide exactly one of max_n_electrodes or subset")
 
-    if not inplace:
-        data = data.copy()
-
     # If no subset provided, randomly select electrodes up to max_n_electrodes
     if subset is None:
-        n = len(data)
+        n = data.signals.shape[data.channel_dim]
         if max_n_electrodes is None or n <= max_n_electrodes:
             return data
         indices = torch.randperm(n, device=data.device)[:max_n_electrodes]

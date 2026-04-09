@@ -5,6 +5,9 @@ from typing import Literal
 import torch
 import torch.nn as nn
 
+from crane.featurizer import CraneFeature
+from crane.preprocess.utils import allow_inplace
+
 
 class Spectrogram(nn.Module):
     """
@@ -68,7 +71,8 @@ class Spectrogram(nn.Module):
         else:
             self.line_noise_mask = None
 
-    def forward(self, data: torch.Tensor, sampling_rate: int, z_score: bool = True) -> torch.Tensor:
+    @allow_inplace
+    def forward(self, data: CraneFeature, *, z_score: bool = True) -> CraneFeature:
         """
         Perform the forward pass of the SpectrogramPreprocessor.
 
@@ -80,14 +84,18 @@ class Spectrogram(nn.Module):
         Returns:
             torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).
         """
-        batch_size, n_electrodes, n_samples = data.shape
+        if data.batched:
+            batch_size, n_electrodes, _ = data.signals.shape
+        else:
+            batch_size = 1
+            n_electrodes = data.signals.shape[0]
 
         # Reshape for STFT
-        x = data.reshape(batch_size * n_electrodes, -1)
+        x = data.signals.reshape(batch_size * n_electrodes, -1)
         x = x.to(dtype=torch.float32)  # Convert to float32 for STFT
 
         # STFT parameters
-        nperseg = round(self.segment_length * sampling_rate)
+        nperseg = round(self.segment_length * data.sampling_rate)
         noverlap = round(self.p_overlap * nperseg)
         hop_length = nperseg - noverlap
 
@@ -113,7 +121,7 @@ class Spectrogram(nn.Module):
 
         # Calculate frequency bins (in Hz)
         # These represent the center frequency of each frequency bin in the spectrogram
-        freq_bins = torch.fft.rfftfreq(nperseg, d=1.0 / sampling_rate, device=x.device)
+        freq_bins = torch.fft.rfftfreq(nperseg, d=1.0 / data.sampling_rate, device=x.device)
 
         # Calculate time bins (in seconds)
         # These represent the center time of each time window in the spectrogram
@@ -144,9 +152,11 @@ class Spectrogram(nn.Module):
 
         # Transform to match expected output dimension
         x = self.output_transform(x)  # shape: (batch_size, n_electrodes, n_timebins, output_dim)
+        x = x.to(dtype=data.signals.dtype)
 
-        x = x.to(dtype=data.dtype)
-        return x
+        out = data.copy()
+        out.signals = x
+        return out
 
     def _compute_line_noise_mask(
         self,

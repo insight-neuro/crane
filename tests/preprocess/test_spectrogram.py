@@ -4,9 +4,17 @@ import torch
 from crane.preprocess import Spectrogram
 
 
-@pytest.mark.parametrize("window", ["hann", "boxcar"])
-def test_shape_dtype_and_windows(window, make_batch):
-    batch = make_batch()["ieeg"]
+@pytest.mark.parametrize(
+    ["window", "batch_size"],
+    [
+        ("hann", 1),
+        ("hann", 2),
+        ("boxcar", 1),
+        ("boxcar", 2),
+    ],
+)
+def test_shape_dtype_and_windows(window, batch_size, make_batch):
+    data = make_batch(batch_size=batch_size)
     seg_len = 0.5  # s -> nperseg = 128 @ 256 Hz
     proc = Spectrogram(
         segment_length=seg_len,
@@ -17,21 +25,21 @@ def test_shape_dtype_and_windows(window, make_batch):
         remove_line_noise=False,
         output_dim=-1,
     )
-    out = proc(**batch)
-    assert out.dtype == batch["data"].dtype  # dtype preserved
+    out = proc(data)
+    assert out.signals.dtype == data.signals.dtype  # dtype preserved
 
-    B, E, _, _ = out.shape
-    assert (B, E) == (2, 3)
+    B, E, _, _ = out.signals.shape
+    assert (B, E) == (batch_size, 3)
 
     # n_freqs should equal computed band size
     expected_nfreqs = proc.max_frequency_bin - proc.min_frequency_bin
-    assert out.shape[-1] == expected_nfreqs
+    assert out.signals.shape[-1] == expected_nfreqs
     # time dimension > 0
-    assert out.shape[2] > 0
+    assert out.signals.shape[2] > 0
 
 
 def test_output_dim_projection(make_batch):
-    batch = make_batch()["ieeg"]
+    data = make_batch()
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -41,12 +49,12 @@ def test_output_dim_projection(make_batch):
         remove_line_noise=False,
         output_dim=32,
     )
-    out = proc(**batch)
-    assert out.shape[-1] == 32  # projected to requested dim
+    out = proc(data)
+    assert out.signals.shape[-1] == 32  # projected to requested dim
 
 
 def test_zscore_normalization_centers_over_batch_and_time(make_batch):
-    batch = make_batch()["ieeg"]
+    data = make_batch()
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -57,18 +65,18 @@ def test_zscore_normalization_centers_over_batch_and_time(make_batch):
         output_dim=-1,
     )
     with torch.no_grad():
-        out = proc(**batch, z_score=True)
+        out = proc(data, z_score=True)
 
     # Mean/std computed over batch and time per electrode & freq in the module.
     # Check they are approximately centered/scaled (tolerant due to eps in denom).
-    mean_bt = out.mean(dim=(0, 2))  # (elec, freq)
-    std_bt = out.std(dim=(0, 2))
+    mean_bt = out.signals.mean(dim=(0, 2))  # (elec, freq)
+    std_bt = out.signals.std(dim=(0, 2))
     assert torch.allclose(mean_bt, torch.zeros_like(mean_bt), atol=5e-2)
     assert torch.all(std_bt > 0)  # not collapsed
 
 
 def test_line_noise_mask_zeroes_masked_bins(make_batch):
-    batch = make_batch()["ieeg"]
+    data = make_batch()
     proc = Spectrogram(
         segment_length=0.5,
         p_overlap=0.5,
@@ -83,10 +91,10 @@ def test_line_noise_mask_zeroes_masked_bins(make_batch):
     assert masked_idx.numel() > 0  # we expect some bins around 50/60 Hz
 
     with torch.no_grad():
-        out = proc(**batch, z_score=False)  # z_score off to simplify check
+        out = proc(data, z_score=False)  # z_score off to simplify check
 
     # All masked frequency bins should be exactly zero for every batch, electrode, time
-    masked_vals = out[..., masked_idx]
+    masked_vals = out.signals[..., masked_idx]
     assert torch.count_nonzero(masked_vals) == 0
 
 

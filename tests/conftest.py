@@ -1,12 +1,14 @@
 import math
+from collections.abc import Callable
 
-import numpy as np
 import pytest
 import torch
 
+from crane import CraneFeature
+
 
 @pytest.fixture
-def make_batch():
+def make_batch() -> Callable[..., CraneFeature]:
     """Create a synthetic EEG batch for testing.
 
     Args:
@@ -16,21 +18,12 @@ def make_batch():
         sampling_rate (int, optional): Sampling rate in Hz. Defaults to 256.
 
     Returns:
-        dict:
-        A dictionary containing the synthetic EEG data and metadata:
-            {
-                "ieeg": {
-                    "data": Tensor of shape (batch_size, n_electrodes, n_samples),
-                    "sampling_rate": sampling_rate,
-                },
-                "channels": {
-                    "id": np.array([f"chan{i}" for i in range(n_elec)]),
-                },
-                "metadata": {},
-            }
+        CraneFeature: A batch of synthetic EEG data with specified dimensions and metadata.
     """
 
-    def _make_batch(batch_size=2, n_elec=3, n_samples=1024, sampling_rate=256) -> dict:
+    def _make_batch(
+        batch_size: int = 2, n_elec: int = 3, n_samples: int = 1024, sampling_rate: int = 256
+    ) -> CraneFeature:
         # simple reproducible signal (sum of low-freq sines + noise)
         torch.manual_seed(0)
         t = torch.arange(n_samples) / sampling_rate
@@ -40,15 +33,16 @@ def make_batch():
             + 0.05 * torch.randn(n_samples)
         )
         x = sig.repeat(batch_size, n_elec, 1).clone()
-        return {
-            "ieeg": {
-                "data": x.to(dtype=torch.float32),
-                "sampling_rate": sampling_rate,
-            },
-            "channels": {
-                "id": np.array([f"chan{i}" for i in range(n_elec)]),
-            },
-            "metadata": {},
-        }
+        if batch_size == 1:
+            x = x.squeeze(0)  # remove batch dim for unbatched case
+        return CraneFeature(
+            brainset="test_brainset",
+            subject="test_subject",
+            session="test_session",
+            signals=x,
+            channel_labels=[f"chan{i}" for i in range(n_elec)],
+            channel_coordinates=torch.randn(n_elec, 3),
+            sampling_rate=sampling_rate,
+        )
 
     return _make_batch
