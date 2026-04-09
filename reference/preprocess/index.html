@@ -907,10 +907,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>crane/preprocess/spectrogram.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  9</span>
-<span class="normal"> 10</span>
-<span class="normal"> 11</span>
-<span class="normal"> 12</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 12</span>
 <span class="normal"> 13</span>
 <span class="normal"> 14</span>
 <span class="normal"> 15</span>
@@ -1075,7 +1072,17 @@
 <span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
-<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Spectrogram</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Spectrogram Preprocessor, computes the spectrogram of iEEG data using STFT.</span>
 
@@ -1137,7 +1144,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">line_noise_mask</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="nd">@allow_inplace</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">CraneFeature</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CraneFeature</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the forward pass of the SpectrogramPreprocessor.</span>
 
@@ -1149,14 +1157,18 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">batched</span><span class="p">:</span>
+            <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">n_electrodes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># Reshape for STFT</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># Convert to float32 for STFT</span>
 
         <span class="c1"># STFT parameters</span>
-        <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
         <span class="n">noverlap</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_overlap</span> <span class="o">*</span> <span class="n">nperseg</span><span class="p">)</span>
         <span class="n">hop_length</span> <span class="o">=</span> <span class="n">nperseg</span> <span class="o">-</span> <span class="n">noverlap</span>
 
@@ -1182,7 +1194,7 @@
 
         <span class="c1"># Calculate frequency bins (in Hz)</span>
         <span class="c1"># These represent the center frequency of each frequency bin in the spectrogram</span>
-        <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
         <span class="c1"># Calculate time bins (in seconds)</span>
         <span class="c1"># These represent the center time of each time window in the spectrogram</span>
@@ -1213,9 +1225,11 @@
 
         <span class="c1"># Transform to match expected output dimension</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape: (batch_size, n_electrodes, n_timebins, output_dim)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_line_noise_mask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1264,7 +1278,7 @@
 
 
 <h3 id="crane.preprocess.Spectrogram.forward" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">forward</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">z_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">forward</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">z_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1348,7 +1362,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="torch.Tensor">Tensor</span></code>
+                  <code><span title="crane.featurizer.CraneFeature">CraneFeature</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1362,10 +1376,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/spectrogram.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 74</span>
 <span class="normal"> 75</span>
 <span class="normal"> 76</span>
 <span class="normal"> 77</span>
@@ -1440,7 +1451,18 @@
 <span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
-<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@allow_inplace</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">CraneFeature</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">z_score</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CraneFeature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform the forward pass of the SpectrogramPreprocessor.</span>
 
@@ -1452,14 +1474,18 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        torch.Tensor: The processed spectrogram with shape (batch_size, n_electrodes, n_timebins, n_freqs or output_dim).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">batched</span><span class="p">:</span>
+        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">n_electrodes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># Reshape for STFT</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">n_electrodes</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># Convert to float32 for STFT</span>
 
     <span class="c1"># STFT parameters</span>
-    <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">sampling_rate</span><span class="p">)</span>
+    <span class="n">nperseg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment_length</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
     <span class="n">noverlap</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_overlap</span> <span class="o">*</span> <span class="n">nperseg</span><span class="p">)</span>
     <span class="n">hop_length</span> <span class="o">=</span> <span class="n">nperseg</span> <span class="o">-</span> <span class="n">noverlap</span>
 
@@ -1485,7 +1511,7 @@
 
     <span class="c1"># Calculate frequency bins (in Hz)</span>
     <span class="c1"># These represent the center frequency of each frequency bin in the spectrogram</span>
-    <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">freq_bins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">nperseg</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
     <span class="c1"># Calculate time bins (in seconds)</span>
     <span class="c1"># These represent the center time of each time window in the spectrogram</span>
@@ -1516,9 +1542,11 @@
 
     <span class="c1"># Transform to match expected output dimension</span>
     <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape: (batch_size, n_electrodes, n_timebins, output_dim)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">x</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1538,7 +1566,7 @@
 
 
 <h2 id="crane.preprocess.laplacian_rereference" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">laplacian_rereference</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">laplacian_rereference</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1562,7 +1590,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>feature</code>
+                <code>data</code>
             </td>
             <td>
                   <code><span title="crane.featurizer.CraneFeature">CraneFeature</span></code>
@@ -1623,8 +1651,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/rereference.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">139</span>
-<span class="normal">140</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
 <span class="normal">143</span>
@@ -1655,18 +1682,14 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="normal">168</span>
 <span class="normal">169</span>
 <span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span>
-    <span class="n">feature</span><span class="p">:</span> <span class="n">CraneFeature</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CraneFeature</span><span class="p">:</span>
+<span class="normal">171</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@allow_inplace</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">laplacian_rereference</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">CraneFeature</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CraneFeature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply Laplacian rereferencing to a batch of neural data</span>
 <span class="sd">    (subtract the mean of the neighbors, as determined by the electrode labels)</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        feature (CraneFeature): CraneFeature containing the neural data and channel information</span>
+<span class="sd">        data (CraneFeature): CraneFeature containing the neural data and channel information</span>
 <span class="sd">        remove_non_laplacian (bool): if True, remove the non-laplacian electrodes from the data; if false, keep them without rereferencing</span>
 
 <span class="sd">    Returns:</span>
@@ -1675,25 +1698,22 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="sd">            updated_channels (list of str or ChannelDict): list of electrode labels or ChannelDict of length n_electrodes_rereferenced (n_electrodes_rereferenced could be different from n_electrodes if remove_non_laplacian is True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">channel_labels</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-        <span class="n">feature</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">electrode_labels</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span>
 
     <span class="c1"># _rereference_electrodes expects (batch_size, n_electrodes, n_samples) or (n_electrodes, n_samples)</span>
     <span class="n">rereferenced_data</span><span class="p">,</span> <span class="n">rereferenced_labels</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_rereference_electrodes</span><span class="p">(</span>
-        <span class="n">feature</span><span class="o">.</span><span class="n">signals</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="p">,</span> <span class="n">electrode_labels</span><span class="p">,</span> <span class="n">remove_non_laplacian</span><span class="o">=</span><span class="n">remove_non_laplacian</span>
     <span class="p">)</span>
 
     <span class="c1"># Update with rereferenced data</span>
     <span class="n">label_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">rereferenced_labels</span><span class="p">)</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">electrode_labels</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">label_set</span><span class="p">]</span>
 
-    <span class="n">feature</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">rereferenced_data</span>
-    <span class="n">feature</span><span class="o">.</span><span class="n">channel_labels</span> <span class="o">=</span> <span class="n">rereferenced_labels</span>
-    <span class="n">feature</span><span class="o">.</span><span class="n">channel_coordinates</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">rereferenced_data</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span> <span class="o">=</span> <span class="n">rereferenced_labels</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">feature</span>
+    <span class="k">return</span> <span class="n">data</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1704,7 +1724,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
 
 <h2 id="crane.preprocess.subset_electrodes" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">subset_electrodes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_n_electrodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1803,8 +1823,7 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>crane/preprocess/subset.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 9</span>
-<span class="normal">10</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
@@ -1854,15 +1873,10 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
 <span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span>
+<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@allow_inplace</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">subset_electrodes</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">CraneFeature</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">max_n_electrodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">subset</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CraneFeature</span><span class="p">:</span>
@@ -1883,17 +1897,12 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
     <span class="k">if</span> <span class="p">(</span><span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provide exactly one of max_n_electrodes or subset&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="n">device</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">device</span>
-
     <span class="c1"># If no subset provided, randomly select electrodes up to max_n_electrodes</span>
     <span class="k">if</span> <span class="n">subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">channel_dim</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">max_n_electrodes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="n">max_n_electrodes</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)[:</span><span class="n">max_n_electrodes</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">device</span><span class="p">)[:</span><span class="n">max_n_electrodes</span><span class="p">]</span>
 
     <span class="c1"># If string IDs provided, map to indices using channel_labels</span>
     <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">):</span>
@@ -1903,16 +1912,15 @@ updated_channels (list of str or ChannelDict): list of electrode labels or Chann
         <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
             <span class="p">[</span><span class="n">id_to_idx</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">subset</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">id_to_idx</span><span class="p">],</span>
             <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
-            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># If integer indices provided, use directly</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
-    <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="n">data</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
-    <span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">signals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">channel_dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">channel_coordinates</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
     <span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">channel_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
 
     <span class="k">return</span> <span class="n">data</span>
